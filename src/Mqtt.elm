@@ -8,7 +8,11 @@ option. This file may not be copied, modified, or distributed
 except according to those terms.
 -}
 
-module Mqtt exposing (random)
+effect module Mqtt where { command = MyCmd }
+  exposing (
+    random
+  )
+
 {-| This package is client library for [MQTT] protocol. It is based on the
 [MQTT.js] project.
 
@@ -19,8 +23,43 @@ module Mqtt exposing (random)
 [MQTT.js]: https://github.com/mqttjs/MQTT.js
 -}
 
+import Task exposing (Task)
 import Native.Mqtt
 
+-- Commands
+type MyCmd msg = Generate
+
+-- Effect Manager
+type alias State = ()
+type alias Msg = Never
+
+init : Task Never State
+init = Task.succeed ()
+
+-- Handle App Messages
+onEffects
+  : Platform.Router msg Msg
+  -> List (MyCmd msg)
+  -> State
+  -> Task Never State
+onEffects router cmds state =
+  Task.succeed ()
+
+-- Handle Self Messages
+onSelfMsg
+  : Platform.Router msg Msg
+  -> Msg
+  -> State
+  -> Task Never State
+onSelfMsg router msg state =
+  Task.succeed ()
+
+-- TODO: What's this?
+cmdMap : ()
+cmdMap = ()
+
+
+
 {-| A placeholder function for early-development stage.  -}
-random : () -> Float
-random = Native.Mqtt.random
+random : Cmd msg
+random = command Generate

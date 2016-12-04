@@ -3,6 +3,10 @@ elm-mqtt
 This package is client library for [MQTT] protocol. It is based on the [MQTT.js]
 project.
 
+<br>
+
+> ### *Working In Progress*
+
 <!-- TODO: Example should be in here
 
 ```elm

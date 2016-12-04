@@ -8,20 +8,19 @@ option. This file may not be copied, modified, or distributed
 except according to those terms.
 -}
 
-module Mqtt exposing (hello)
+module Mqtt exposing (random)
 {-| This package is client library for [MQTT] protocol. It is based on the
 [MQTT.js] project.
 
 # Placeholder
-@docs hello
+@docs random
 
 [MQTT]: http://mqtt.org/
 [MQTT.js]: https://github.com/mqttjs/MQTT.js
 -}
 
-{-| A placeholder function for early-development stage.
+import Native.Mqtt
 
-    hello == "Hello, world!"
--}
-hello : String
-hello = "Hello, world!"
+{-| A placeholder function for early-development stage.  -}
+random : () -> Float
+random = Native.Mqtt.random

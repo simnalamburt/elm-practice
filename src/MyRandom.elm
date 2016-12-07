@@ -23,7 +23,7 @@ This function *can* produce values outside of the range [[`minInt`](#minInt),
 -}
 int : Int -> Int -> Generator Int
 int a b =
-  Generator <| \(Seed seed) ->
+  GenFn <| \(Seed seed) ->
     let
       (lo,hi) =
         if a < b then (a,b) else (b,a)
@@ -80,8 +80,8 @@ how to generate booleans and letters based on a basic integer generator.
 
 -}
 map : (a -> b) -> Generator a -> Generator b
-map func (Generator genA) =
-  Generator <| \seed0 ->
+map func (GenFn genA) =
+  GenFn <| \seed0 ->
     let
       (a, seed1) = genA seed0
     in
@@ -100,7 +100,7 @@ describes how to generate strings.
 To actually *run* a generator and produce the random values, you need to use
 functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 -}
-type Generator a = Generator (Seed -> (a, Seed))
+type Generator a = GenFn (Seed -> (a, Seed))
 
 
 type State = State Int Int
@@ -140,7 +140,7 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
 step : Generator a -> Seed -> (a, Seed)
-step (Generator generator) seed =
+step (GenFn generator) seed =
   generator seed
 
 

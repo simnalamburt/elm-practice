@@ -64,22 +64,8 @@ iLogBase b i =
 
 
 {-| Transform the values produced by a generator. The following examples show
-how to generate booleans and letters based on a basic integer generator.
-
-    bool : Generator Bool
-    bool =
-      map ((==) 1) (int 0 1)
-
-    lowercaseLetter : Generator Char
-    lowercaseLetter =
-      map (\n -> Char.fromCode (n + 97)) (int 0 25)
-
-    uppercaseLetter : Generator Char
-    uppercaseLetter =
-      map (\n -> Char.fromCode (n + 65)) (int 0 25)
-
--}
-map : (a -> b) -> Generator a -> Generator b
+how to generate booleans and letters based on a basic integer generator.  -}
+map : (Int -> msg) -> Generator Int -> Generator msg
 map func (GenFn genA) =
   GenFn <| \seed0 ->
     let
@@ -139,7 +125,7 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
-step : Generator a -> Seed -> (a, Seed)
+step : Generator Int -> Seed -> (Int, Seed)
 step (GenFn generator) seed =
   generator seed
 
@@ -213,7 +199,7 @@ tutorial][arch] which has a section specifically [about random values][rand].
 [arch]: https://evancz.gitbooks.io/an-introduction-to-elm/content/architecture/index.html
 [rand]: https://evancz.gitbooks.io/an-introduction-to-elm/content/architecture/effects/random.html
 -}
-generate : (a -> msg) -> Generator a -> Cmd msg
+generate : (Int -> msg) -> Generator Int -> Cmd msg
 generate tagger generator =
   command (Generate (map tagger generator))
 
@@ -221,7 +207,7 @@ generate tagger generator =
 type MyCmd msg = Generate (Generator msg)
 
 
-cmdMap : (a -> b) -> MyCmd a -> MyCmd b
+cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int
 cmdMap func (Generate generator) =
   Generate (map func generator)
 
@@ -232,7 +218,7 @@ init =
     |> Task.andThen (\t -> Task.succeed (initialSeed (round t)))
 
 
-onEffects : Platform.Router msg Never -> List (MyCmd msg) -> Seed -> Task Never Seed
+onEffects : Platform.Router Int Never -> List (MyCmd Int) -> Seed -> Task Never Seed
 onEffects router commands seed =
   case commands of
     [] ->

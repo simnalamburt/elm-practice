@@ -1,53 +1,4 @@
-effect module MyRandom where { command = MyCmd } exposing
-  ( Generator, Seed
-  , bool, int, float
-  , list, pair
-  , map, map2, map3, map4, map5
-  , andThen
-  , minInt, maxInt
-  , generate
-  , step, initialSeed
-  )
-
-{-| This library helps you generate pseudo-random values.
-
-This library is all about building [`generators`](#Generator) for whatever
-type of values you need. There are a bunch of primitive generators like
-[`bool`](#bool) and [`int`](#int) that you can build up into fancier
-generators with functions like [`list`](#list) and [`map`](#map).
-
-It may be helpful to [read about JSON decoders][json] because they work very
-similarly.
-
-[json]: https://evancz.gitbooks.io/an-introduction-to-elm/content/interop/json.html
-
-> *Note:* This is an implementation of the Portable Combined Generator of
-L'Ecuyer for 32-bit computers. It is almost a direct translation from the
-[System.Random](http://hackage.haskell.org/package/random-1.0.1.1/docs/System-Random.html)
-module. It has a period of roughly 2.30584e18.
-
-# Generators
-@docs Generator
-
-# Primitive Generators
-@docs bool, int, float
-
-# Data Structure Generators
-@docs pair, list
-
-# Custom Generators
-@docs map, map2, map3, map4, map5, andThen
-
-# Generate Values
-@docs generate
-
-# Generate Values Manually
-@docs step, Seed, initialSeed
-
-# Constants
-@docs maxInt, minInt
-
--}
+effect module MyRandom where { command = MyCmd } exposing ( int, generate )
 
 import Basics exposing (..)
 import List exposing ((::))
@@ -60,22 +11,6 @@ import Tuple
 
 
 -- PRIMITIVE GENERATORS
-
-
-{-| Create a generator that produces boolean values. The following example
-simulates a coin flip that may land heads or tails.
-
-    type Flip = Heads | Tails
-
-    coinFlip : Generator Flip
-    coinFlip =
-        map (\b -> if b then Heads else Tails) bool
--}
-bool : Generator Bool
-bool =
-  map ((==) 1) (int 0 1)
-
-
 {-| Generate 32-bit integers in a given range.
 
     int 0 10   -- an integer between zero and ten
@@ -123,94 +58,6 @@ iLogBase b i =
     1 + iLogBase b (i // b)
 
 
-{-| The maximum value for randomly generated 32-bit ints: 2147483647 -}
-maxInt : Int
-maxInt =
-  2147483647
-
-
-{-| The minimum value for randomly generated 32-bit ints: -2147483648 -}
-minInt : Int
-minInt =
-  -2147483648
-
-
-{-| Generate floats in a given range. The following example is a generator
-that produces decimals between 0 and 1.
-
-    probability : Generator Float
-    probability =
-        float 0 1
--}
-float : Float -> Float -> Generator Float
-float a b =
-  Generator <| \seed ->
-    let
-      (lo, hi) =
-        if a < b then (a,b) else (b,a)
-
-      (number, newSeed) =
-        step (int minInt maxInt) seed
-
-      negativeOneToOne =
-        toFloat number / toFloat (maxInt - minInt)
-
-      scaled =
-        (lo+hi)/2 + ((hi-lo) * negativeOneToOne)
-    in
-      (scaled, newSeed)
-
-
-
--- DATA STRUCTURES
-
-
-{-| Create a pair of random values. A common use of this might be to generate
-a point in a certain 2D space. Imagine we have a collage that is 400 pixels
-wide and 200 pixels tall.
-
-    randomPoint : Generator (Int,Int)
-    randomPoint =
-        pair (int -200 200) (int -100 100)
-
--}
-pair : Generator a -> Generator b -> Generator (a,b)
-pair genA genB =
-  map2 (,) genA genB
-
-
-{-| Create a list of random values.
-
-    floatList : Generator (List Float)
-    floatList =
-        list 10 (float 0 1)
-
-    intList : Generator (List Int)
-    intList =
-        list 5 (int 0 100)
-
-    intPairs : Generator (List (Int, Int))
-    intPairs =
-        list 10 <| pair (int 0 100) (int 0 100)
--}
-list : Int -> Generator a -> Generator (List a)
-list n (Generator generate) =
-  Generator <| \seed ->
-    listHelp [] n generate seed
-
-
-listHelp : List a -> Int -> (Seed -> (a,Seed)) -> Seed -> (List a, Seed)
-listHelp list n generate seed =
-  if n < 1 then
-    (List.reverse list, seed)
-
-  else
-    let
-      (value, newSeed) =
-        generate seed
-    in
-      listHelp (value :: list) (n-1) generate newSeed
-
 
 
 -- CUSTOM GENERATORS
@@ -241,107 +88,6 @@ map func (Generator genA) =
       (func a, seed1)
 
 
-{-| Combine two generators.
-
-This function is used to define things like [`pair`](#pair) where you want to
-put two generators together.
-
-    pair : Generator a -> Generator b -> Generator (a,b)
-    pair genA genB =
-      map2 (,) genA genB
-
--}
-map2 : (a -> b -> c) -> Generator a -> Generator b -> Generator c
-map2 func (Generator genA) (Generator genB) =
-  Generator <| \seed0 ->
-    let
-      (a, seed1) = genA seed0
-      (b, seed2) = genB seed1
-    in
-      (func a b, seed2)
-
-
-{-| Combine three generators. This could be used to produce random colors.
-
-    import Color
-
-    rgb : Generator Color.Color
-    rgb =
-      map3 Color.rgb (int 0 255) (int 0 255) (int 0 255)
-
-    hsl : Generator Color.Color
-    hsl =
-      map3 Color.hsl (map degrees (int 0 360)) (float 0 1) (float 0 1)
--}
-map3 : (a -> b -> c -> d) -> Generator a -> Generator b -> Generator c -> Generator d
-map3 func (Generator genA) (Generator genB) (Generator genC) =
-  Generator <| \seed0 ->
-    let
-      (a, seed1) = genA seed0
-      (b, seed2) = genB seed1
-      (c, seed3) = genC seed2
-    in
-      (func a b c, seed3)
-
-
-{-| Combine four generators.
--}
-map4 : (a -> b -> c -> d -> e) -> Generator a -> Generator b -> Generator c -> Generator d -> Generator e
-map4 func (Generator genA) (Generator genB) (Generator genC) (Generator genD) =
-  Generator <| \seed0 ->
-    let
-      (a, seed1) = genA seed0
-      (b, seed2) = genB seed1
-      (c, seed3) = genC seed2
-      (d, seed4) = genD seed3
-    in
-      (func a b c d, seed4)
-
-
-{-| Combine five generators.
--}
-map5 : (a -> b -> c -> d -> e -> f) -> Generator a -> Generator b -> Generator c -> Generator d -> Generator e -> Generator f
-map5 func (Generator genA) (Generator genB) (Generator genC) (Generator genD) (Generator genE) =
-  Generator <| \seed0 ->
-    let
-      (a, seed1) = genA seed0
-      (b, seed2) = genB seed1
-      (c, seed3) = genC seed2
-      (d, seed4) = genD seed3
-      (e, seed5) = genE seed4
-    in
-      (func a b c d e, seed5)
-
-
-{-| Chain random operations, threading through the seed. In the following
-example, we will generate a random letter by putting together uppercase and
-lowercase letters.
-
-    letter : Generator Char
-    letter =
-      bool
-        |> andThen upperOrLower
-
-    upperOrLower : Bool -> Generator Char
-    upperOrLower b =
-      if b then uppercaseLetter else lowercaseLetter
-
-    -- bool : Generator Bool
-    -- uppercaseLetter : Generator Char
-    -- lowercaseLetter : Generator Char
--}
-andThen : (a -> Generator b) -> Generator a -> Generator b
-andThen callback (Generator generate) =
-  Generator <| \seed ->
-    let
-      (result, newSeed) =
-        generate seed
-
-      (Generator genB) =
-        callback result
-    in
-      genB newSeed
-
 
 
 -- IMPLEMENTATION
@@ -354,8 +100,7 @@ describes how to generate strings.
 To actually *run* a generator and produce the random values, you need to use
 functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 -}
-type Generator a =
-    Generator (Seed -> (a, Seed))
+type Generator a = Generator (Seed -> (a, Seed))
 
 
 type State = State Int Int
@@ -368,8 +113,6 @@ type Seed =
   Seed
     { state : State
     , next  : State -> (Int, State)
-    , split : State -> (State, State)
-    , range : State -> (Int,Int)
     }
 
 
@@ -411,8 +154,6 @@ initialSeed n =
   Seed
     { state = initState n
     , next = next
-    , split = split
-    , range = range
     }
 
 
@@ -459,27 +200,6 @@ next (State state1 state2) =
     newZ = if z < 1 then z + magicNum8 else z
   in
     (newZ, State newState1 newState2)
-
-
-split : State -> (State, State)
-split (State s1 s2 as std) =
-  let
-    new_s1 =
-      if s1 == magicNum6-1 then 1 else s1 + 1
-
-    new_s2 =
-      if s2 == 1 then magicNum7-1 else s2 - 1
-
-    (State t1 t2) =
-      Tuple.second (next std)
-  in
-    (State new_s1 t2, State t1 new_s2)
-
-
-range : State -> (Int,Int)
-range _ =
-    (0, magicNum8)
-
 
 
 -- MANAGER

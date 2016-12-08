@@ -76,11 +76,11 @@ intRng seed =
     k = hi - lo + 1
     base = 2147483561 -- 2^31 - 87
     n = iLogBase base k
-    (v, nextState) = f n 1 seed.state
+    (v, nextState) = f n 1 seed
   in
     (
       lo + v % k,
-      { seed | state = nextState }
+      nextState
     )
 
 
@@ -115,7 +115,8 @@ initState seed =
 
 {-| A `Seed` is the source of randomness in this whole system. Whenever you want
 to use a generator, you need to pair it with a seed. -}
-type alias Seed = { state : State }
+-- TODO: Seed 타입을 아예 없애고 State로 뭉치자
+type alias Seed = State
 
 {-| Create a `seed` of randomness which makes it possible to
 generate random values. If you use the same seed many times, it will result
@@ -123,7 +124,7 @@ in the same thing every time! A good way to get an unexpected seed is to use
 the current time.
 -}
 initialSeed : Int -> Seed
-initialSeed n = { state = initState n }
+initialSeed n = initState n
 
 
 {-| Generate a random value as specified by a given `GenericRng`.

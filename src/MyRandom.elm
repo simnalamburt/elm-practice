@@ -9,8 +9,30 @@ import Time
 import Tuple
 
 
+--
+-- Definition of Rng and its types
+--
 
--- PRIMITIVE GENERATORS
+{-| A `GenericRng` is like a recipe for generating certain random values.  So a
+`IntRng` describes how to generate integers and a `GenericRng String` describes
+how to generate strings.
+
+To actually *run* a generator and produce the random values, you need to use
+functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
+-}
+type alias GenericRng a = Seed -> (a, Seed)
+
+{-| Int만 만들 수 있는 Rng -}
+type alias IntRng = GenericRng Int
+
+{-| Transform the values produced by a generator. The following examples show
+how to generate booleans and letters based on a basic integer generator. -}
+mapRng : (Int -> msg) -> IntRng -> GenericRng msg
+mapRng func genA =
+  \seed0 ->
+    let (a, seed1) = genA seed0
+    in (func a, seed1)
+
 {-| Generate 32-bit integers in `[0, 10000)` -}
 intRng : IntRng
 intRng seed =
@@ -45,50 +67,53 @@ intRng seed =
     )
 
 
-
-
-
-
--- CUSTOM GENERATORS
-
-
-{-| Transform the values produced by a generator. The following examples show
-how to generate booleans and letters based on a basic integer generator.  -}
-mapRng : (Int -> msg) -> IntRng -> GenericRng msg
-mapRng func genA =
-  \seed0 ->
-    let (a, seed1) = genA seed0
-    in (func a, seed1)
-
-
-
-
+--
 -- IMPLEMENTATION
+--
+magicNum0 = 40014
+magicNum1 = 53668
+magicNum2 = 12211
+magicNum3 = 52774
+magicNum4 = 40692
+magicNum5 = 3791
+magicNum6 = 2147483563
+magicNum7 = 2147483399
+magicNum8 = 2147483562
 
-
-{-| A `GenericRng` is like a recipe for generating certain random values.
-So a `IntRng` describes how to generate integers and a `GenericRng
-String` describes how to generate strings.
-
-To actually *run* a generator and produce the random values, you need to use
-functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
--}
-type alias GenericRng a = Seed -> (a, Seed)
-
-{-| Int만 만들 수 있는 Rng -}
-type alias IntRng = GenericRng Int
-
-
+{-| Rng의 State -}
 type alias State = (Int, Int)
 
+{-| Produce the initial generator state. Distinct arguments should be likely to
+produce distinct generator states.  -}
+initState : Int -> State
+initState seed =
+  let
+    s = max seed -seed
+    q  = s // (magicNum6-1)
+    s1 = s %  (magicNum6-1)
+    s2 = q %  (magicNum7-1)
+  in
+    (s1 + 1, s2 + 1)
 
-{-| A `Seed` is the source of randomness in this whole system. Whenever
-you want to use a generator, you need to pair it with a seed.
--}
+
+{-| A `Seed` is the source of randomness in this whole system. Whenever you want
+to use a generator, you need to pair it with a seed. -}
 type alias Seed =
   {
     state : State,
     next  : State -> (Int, State)
+  }
+
+{-| Create a `seed` of randomness which makes it possible to
+generate random values. If you use the same seed many times, it will result
+in the same thing every time! A good way to get an unexpected seed is to use
+the current time.
+-}
+initialSeed : Int -> Seed
+initialSeed n =
+  {
+    state = initState n,
+    next = next
   }
 
 
@@ -118,45 +143,6 @@ the same seed, you get the same results.
 step : IntRng -> Seed -> (Int, Seed)
 step generator seed = generator seed
 
-
-{-| Create a `seed` of randomness which makes it possible to
-generate random values. If you use the same seed many times, it will result
-in the same thing every time! A good way to get an unexpected seed is to use
-the current time.
--}
-initialSeed : Int -> Seed
-initialSeed n =
-  {
-    state = initState n,
-    next = next
-  }
-
-
-{-| Produce the initial generator state. Distinct arguments should be likely
-to produce distinct generator states.
--}
-initState : Int -> State
-initState seed =
-  let
-    s = max seed -seed
-    q  = s // (magicNum6-1)
-    s1 = s %  (magicNum6-1)
-    s2 = q %  (magicNum7-1)
-  in
-    (s1 + 1, s2 + 1)
-
-
-magicNum0 = 40014
-magicNum1 = 53668
-magicNum2 = 12211
-magicNum3 = 52774
-magicNum4 = 40692
-magicNum5 = 3791
-magicNum6 = 2147483563
-magicNum7 = 2147483399
-magicNum8 = 2147483562
-
-
 next : State -> (Int, State)
 next (state1, state2) =
   -- Div always rounds down and so random numbers are biased
@@ -177,9 +163,9 @@ next (state1, state2) =
     (newZ, (newState1, newState2))
 
 
--- MANAGER
-
-
+--
+-- Effect Manager
+--
 {-| Create a command that will generate random values.
 
 Read more about how to use this in your programs in [The Elm Architecture

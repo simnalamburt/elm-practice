@@ -8,7 +8,9 @@ elm-reactor
 # See http://127.0.0.1:8000/src/App.elm
 ```
 
-#### 설명
+### [`MyRandom.elm` 보러가기][code]
+
+### 설명
 Elm은 하스켈처럼, 모든 함수가 퓨어한 언어이다. 그래서 사이드이펙트를 가진
 라이브러리를 만들으려면, 평범한 방법으로는 안된다. 모듈 선언도 `effect module`
 이런식으로 특이하게 해야한다. 이를 Elm 커뮤니티에선 [Effect Manager]라고 부른다.
@@ -36,6 +38,7 @@ effect module MyRandom where { command = MyCmd }
 license] and the [Apache License (Version 2.0)]. See [COPYRIGHT] for details.
 
 [effect managers]: https://guide.elm-lang.org/effect_managers/
+[code]: https://github.com/simnalamburt/elm-practice/blob/master/src/MyRandom.elm
 [Effect Manager]: https://guide.elm-lang.org/effect_managers/
 [`Random.elm`]: https://github.com/elm-lang/core/blob/master/src/Random.elm
 [MIT license]: LICENSE-MIT

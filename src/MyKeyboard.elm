@@ -47,7 +47,7 @@ init : Task Never (State msg)
 init = Task.succeed Dict.empty
 
 
-type alias Msg =
+type alias SelfMsg =
   { category : String
   }
 
@@ -56,7 +56,7 @@ type alias Msg =
   Task.andThen (\_ -> task2) task1
 
 
-onEffects : Platform.Router msg Msg -> List (MySub msg) -> State msg -> Task Never (State msg)
+onEffects : Platform.Router msg SelfMsg -> List (MySub msg) -> State msg -> Task Never (State msg)
 onEffects router newSubs oldState =
   let
     -- TODO: 안쓰는 카테고리 다 삭제
@@ -82,7 +82,7 @@ onEffects router newSubs oldState =
 
         -- onDocument 함수에 넣을 콜백함수
         callBack : () -> Task Never ()
-        callBack () = Platform.sendToSelf router (Msg category)
+        callBack () = Platform.sendToSelf router (SelfMsg category)
 
         -- onDocument 호출로 생성한 프로미스
         -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
@@ -108,7 +108,7 @@ onEffects router newSubs oldState =
       (Task.succeed Dict.empty)
 
 
-onSelfMsg : Platform.Router msg Msg -> Msg -> State msg -> Task Never (State msg)
+onSelfMsg : Platform.Router msg SelfMsg -> SelfMsg -> State msg -> Task Never (State msg)
 onSelfMsg router {category} state =
   case Dict.get category state of
     Nothing ->

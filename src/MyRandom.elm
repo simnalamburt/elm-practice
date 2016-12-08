@@ -12,7 +12,7 @@ import Tuple
 
 -- PRIMITIVE GENERATORS
 {-| Generate 32-bit integers in `[0, 10000)` -}
-int : CustomGenerator Int
+int : IntGenerator
 int seed =
   let
     lo = 0
@@ -54,7 +54,7 @@ int seed =
 
 {-| Transform the values produced by a generator. The following examples show
 how to generate booleans and letters based on a basic integer generator.  -}
-map : (Int -> msg) -> CustomGenerator Int -> CustomGenerator msg
+map : (Int -> msg) -> IntGenerator -> CustomGenerator msg
 map func genA =
   \seed0 ->
     let (a, seed1) = genA seed0
@@ -66,14 +66,17 @@ map func genA =
 -- IMPLEMENTATION
 
 
-{-| A `CustomGenerator` is like a recipe for generating certain random values. So a
-`CustomGenerator Int` describes how to generate integers and a `CustomGenerator String`
-describes how to generate strings.
+{-| A `CustomGenerator` is like a recipe for generating certain random values.
+So a `IntGenerator` describes how to generate integers and a `CustomGenerator
+String` describes how to generate strings.
 
 To actually *run* a generator and produce the random values, you need to use
 functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 -}
 type alias CustomGenerator a = Seed -> (a, Seed)
+
+{-| Int만 만들 수 있는 Rng -}
+type alias IntGenerator = CustomGenerator Int
 
 
 type alias State = (Int, Int)
@@ -112,7 +115,7 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
-step : CustomGenerator Int -> Seed -> (Int, Seed)
+step : IntGenerator -> Seed -> (Int, Seed)
 step generator seed = generator seed
 
 

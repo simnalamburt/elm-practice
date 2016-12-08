@@ -7,7 +7,6 @@
         "src"
     ],
     "exposed-modules": [
-        "App"
     ],
     "native-modules": true,
     "dependencies": {

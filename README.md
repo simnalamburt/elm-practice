@@ -5,7 +5,7 @@ Elm Effect Manager Practice
 ```bash
 elm-reactor
 
-# See http://127.0.0.1:8000/src/App.elm
+# http://127.0.0.1:8000/src/CommandExample.elm
 ```
 
 ### command 예제 보러가기: [`MyCounter.elm`](src/MyCounter.elm)

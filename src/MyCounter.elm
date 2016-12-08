@@ -291,10 +291,10 @@ init = Task.succeed newState
 {-| Elm 런타임에 의해 호출되는 함수이며, 상기했듯이 이펙트 매니저의 세팅에 따라
 타입명세가 달라지는 함수.
 
-함수의 첫번째 인자인 [Router]는 `MyCounter` Effect Manager가 메인 어플리케이션인
-`App.elm`로 메시지를 보낼때 사용하는 핸들이다. 이 타입 안의 값을 직접 조작할
-일은 없고, `Platform.sendToApp` 혹은 `Platform.sendToSelf` 함수를 호출할때에
-인자로만 쓰인다.
+함수의 첫번째 인자인 [Router]는 `MyCounter` Effect Manager가
+`CommandExample.elm`과 같은 어플리케이션으로 메시지를 보낼때 사용하는 핸들이다.
+이 타입 안의 값을 직접 조작할 일은 없고, `Platform.sendToApp` 혹은
+`Platform.sendToSelf` 함수를 호출할때에 인자로만 쓰인다.
 
 두번째 파라미터인 `List (MyCmd msg)` 는 현재 수행해야할 MyCmd(커맨드들)의
 배열이다. 배열에 현재 수행해야 할 커맨드가 하나도 없다면, 바로 `Task.succeed

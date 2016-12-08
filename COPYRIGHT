@@ -15,7 +15,7 @@ The elm-practice Project includes packages written by third parties. The
 following third party packages are included, and carry their own copyright
 notices and license terms:
 
-* src/App.elm is derived from src/examples/random.elm of elm-lang/elm-lang.org.
+* src/CommandExample.elm is derived from src/examples/random.elm of elm-lang/elm-lang.org.
   https://github.com/elm-lang/elm-lang.org/blob/master/src/examples/random.elm
   It carries the following license.
 

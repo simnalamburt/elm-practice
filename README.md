@@ -10,6 +10,8 @@ elm-reactor
 
 ### [`MyCounter.elm` 보러가기][code]
 
+<br>
+
 Effect Manager란?
 --------
 Elm은 하스켈처럼, 모든 함수가 퓨어한 언어이다. 그래서 사이드이펙트를 가진
@@ -31,6 +33,8 @@ effect module MyRandom where { command = MyCmd, subscription = MySub }
 그래서 표준 라이브러리의 [`Random.elm`]를 고쳐서, 한눈에 보고 이해할 수 있는
 간단한 형태로 바꾸었다. 주석에 최대한 자세하게 설명을 달아두었으니, 다른
 개발자가 보고 이해할 수 있었으면 좋겠다.
+
+<br>
 
 --------
 

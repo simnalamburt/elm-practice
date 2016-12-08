@@ -195,15 +195,15 @@ tutorial][arch] which has a section specifically [about random values][rand].
 -}
 generate : (Int -> msg) -> Generator Int -> Cmd msg
 generate tagger generator =
-  command (Generate (map tagger generator))
+  command (MakeMyCmd (map tagger generator))
 
 
-type MyCmd msg = Generate (Generator msg)
+type MyCmd msg = MakeMyCmd (Generator msg)
 
 
 cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int
-cmdMap func (Generate generator) =
-  Generate (map func generator)
+cmdMap func (MakeMyCmd generator) =
+  MakeMyCmd (map func generator)
 
 
 init : Task Never Seed
@@ -218,7 +218,7 @@ onEffects router commands seed =
     [] ->
       Task.succeed seed
 
-    Generate generator :: rest ->
+    MakeMyCmd generator :: rest ->
       let
         (value, newSeed) =
           step generator seed

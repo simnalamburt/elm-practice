@@ -47,9 +47,7 @@ init : Task Never (State msg)
 init = Task.succeed Dict.empty
 
 
-type alias SelfMsg =
-  { category : String
-  }
+type alias SelfMsg = ()
 
 
 (&>) task1 task2 =
@@ -82,7 +80,7 @@ onEffects router newSubs oldState =
 
         -- onDocument 함수에 넣을 콜백함수
         callBack : () -> Task Never ()
-        callBack () = Platform.sendToSelf router (SelfMsg category)
+        callBack () = Platform.sendToSelf router ()
 
         -- onDocument 호출로 생성한 프로미스
         -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
@@ -109,8 +107,9 @@ onEffects router newSubs oldState =
 
 
 onSelfMsg : Platform.Router msg SelfMsg -> SelfMsg -> State msg -> Task Never (State msg)
-onSelfMsg router {category} state =
-  case Dict.get category state of
+onSelfMsg router () state =
+  -- TODO: keydown이 여기 들어갈일이 없도록
+  case Dict.get "keydown" state of
     Nothing ->
       Task.succeed state
 
@@ -121,4 +120,3 @@ onSelfMsg router {category} state =
       in
         Task.sequence (List.map send taggers)
           |> Task.andThen (\_ -> Task.succeed state)
-

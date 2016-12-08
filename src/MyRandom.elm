@@ -18,9 +18,9 @@ import Tuple
 how to generate strings.
 
 To actually *run* a generator and produce the random values, you need to use
-functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
+functions like [`generate`](#generate) and [`initialState`](#initialState).
 -}
-type alias GenericRng a = Seed -> (a, Seed)
+type alias GenericRng a = State -> (a, State)
 
 {-| Int만 만들 수 있는 Rng -}
 type alias IntRng = GenericRng Int
@@ -29,13 +29,13 @@ type alias IntRng = GenericRng Int
 how to generate booleans and letters based on a basic integer generator. -}
 mapRng : (Int -> msg) -> IntRng -> GenericRng msg
 mapRng func genA =
-  \seed0 ->
-    let (a, seed1) = genA seed0
-    in (func a, seed1)
+  \state0 ->
+    let (a, state1) = genA state0
+    in (func a, state1)
 
 {-| Generate 32-bit integers in `[0, 10000)` -}
 intRng : IntRng
-intRng seed =
+intRng state =
   let
     iLogBase : Int -> Int -> Int
     iLogBase b i =
@@ -76,7 +76,7 @@ intRng seed =
     k = hi - lo + 1
     base = 2147483561 -- 2^31 - 87
     n = iLogBase base k
-    (v, nextState) = f n 1 seed
+    (v, nextState) = f n 1 state
   in
     (
       lo + v % k,
@@ -97,15 +97,21 @@ magicNum6 = 2147483563
 magicNum7 = 2147483399
 magicNum8 = 2147483562
 
-{-| Rng의 State -}
+{-| A `State` is the source of randomness in this whole system. Whenever you want
+to use a generator, you need to pair it with a state. -}
 type alias State = (Int, Int)
 
-{-| Produce the initial generator state. Distinct arguments should be likely to
-produce distinct generator states.  -}
-initState : Int -> State
-initState seed =
+{-| Produce the initial generator state. Create a `state` of randomness which
+makes it possible to generate random values.
+
+Distinct arguments should be likely to produce distinct generator states. If you
+use the same state many times, it will result in the same thing every time!
+
+A good way to get an unexpected state is to use the current time. -}
+initialState : Int -> State
+initialState state =
   let
-    s = max seed -seed
+    s = max state -state
     q  = s // (magicNum6-1)
     s1 = s %  (magicNum6-1)
     s2 = q %  (magicNum7-1)
@@ -113,45 +119,31 @@ initState seed =
     (s1 + 1, s2 + 1)
 
 
-{-| A `Seed` is the source of randomness in this whole system. Whenever you want
-to use a generator, you need to pair it with a seed. -}
--- TODO: Seed 타입을 아예 없애고 State로 뭉치자
-type alias Seed = State
-
-{-| Create a `seed` of randomness which makes it possible to
-generate random values. If you use the same seed many times, it will result
-in the same thing every time! A good way to get an unexpected seed is to use
-the current time.
--}
-initialSeed : Int -> Seed
-initialSeed n = initState n
-
-
 {-| Generate a random value as specified by a given `GenericRng`.
 
 In the following example, we are trying to generate a number between 0 and 100
 with the `int 0 100` generator. Each time we call `step` we need to provide a
-seed. This will produce a random number and a *new* seed to use if we want to
+state. This will produce a random number and a *new* state to use if we want to
 run other generators later.
 
-So here it is done right, where we get a new seed from each `step` call and
+So here it is done right, where we get a new state from each `step` call and
 thread that through.
 
-    seed0 = initialSeed 31415
+    state0 = initialState 31415
 
-    -- step (int 0 100) seed0 ==> (42, seed1)
-    -- step (int 0 100) seed1 ==> (31, seed2)
-    -- step (int 0 100) seed2 ==> (99, seed3)
+    -- step (int 0 100) state0 ==> (42, state1)
+    -- step (int 0 100) state1 ==> (31, state2)
+    -- step (int 0 100) state2 ==> (99, state3)
 
-Notice that we use different seeds on each line. This is important! If you use
-the same seed, you get the same results.
+Notice that we use different states on each line. This is important! If you use
+the same state, you get the same results.
 
-    -- step (int 0 100) seed0 ==> (42, seed1)
-    -- step (int 0 100) seed0 ==> (42, seed1)
-    -- step (int 0 100) seed0 ==> (42, seed1)
+    -- step (int 0 100) state0 ==> (42, state1)
+    -- step (int 0 100) state0 ==> (42, state1)
+    -- step (int 0 100) state0 ==> (42, state1)
 -}
-step : IntRng -> Seed -> (Int, Seed)
-step generator seed = generator seed
+step : IntRng -> State -> (Int, State)
+step generator state = generator state
 
 
 --
@@ -175,27 +167,27 @@ cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int
 cmdMap func (MakeMyCmd generator) = MakeMyCmd (mapRng func generator)
 
 
-init : Task Never Seed
+init : Task Never State
 init =
   Time.now
-    |> Task.andThen (\t -> Task.succeed (initialSeed (round t)))
+    |> Task.andThen (\t -> Task.succeed (initialState (round t)))
 
 
-onEffects : Platform.Router Int Never -> List (MyCmd Int) -> Seed -> Task Never Seed
-onEffects router commands seed =
+onEffects : Platform.Router Int Never -> List (MyCmd Int) -> State -> Task Never State
+onEffects router commands state =
   case commands of
     [] ->
-      Task.succeed seed
+      Task.succeed state
 
     MakeMyCmd generator :: rest ->
       let
-        (value, newSeed) =
-          step generator seed
+        (value, newState) =
+          step generator state
       in
         Platform.sendToApp router value
-          |> Task.andThen (\_ -> onEffects router rest newSeed)
+          |> Task.andThen (\_ -> onEffects router rest newState)
 
 
-onSelfMsg : Platform.Router msg Never -> Never -> Seed -> Task Never Seed
-onSelfMsg _ _ seed =
-  Task.succeed seed
+onSelfMsg : Platform.Router msg Never -> Never -> State -> Task Never State
+onSelfMsg _ _ state =
+  Task.succeed state

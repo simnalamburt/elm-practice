@@ -318,16 +318,23 @@ onEffects
   -- 이 프로그램에선 SelfMsg가 없으므로, Router의 두번째 타입 변수에 Never
   -- 타입이 들어갔다. 마찬가지로 리턴값 역시, 실패할 리 없는 함수이므로 Task
   -- 타입의 첫번째 타입변수에 Never 타입이 들어갔다.
-onEffects router commands state =
+onEffects router commands oldState =
   case commands of
-    -- 아무 커맨드가 없다.
-    [] -> Task.succeed state
+    -- 아무 커맨드가 없는경우 바로 oldState를 리턴한다
+    [] -> Task.succeed oldState
 
-    MakeMyCmd generator :: rest ->
+    -- 배열 안에 커맨드가 있을경우, 제일 앞 커맨드를 pop해서 적절히 처리한다
+    myCmd :: rest ->
       let
-        (value, newState) = generator state
+        -- MyCmd 안에 들어있는 geneicCounter 함수를 꺼낸다
+        (MakeMyCmd genericCounter) = myCmd
+        -- genericCounter 함수에 oldState를 먹여 newState와 결과값 value를 얻는다
+        (value, newState) = genericCounter oldState
       in
+        -- 결과값 value를 어플리케이션에게 전송한다
         Platform.sendToApp router value
+          -- 그 뒤 처리하지 않은 남은 커맨드들(rest)을 onEffects를 재귀호출해서
+          -- 마저 처리해준다.
           |> Task.andThen (\_ -> onEffects router rest newState)
 
 

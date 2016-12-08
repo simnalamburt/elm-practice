@@ -49,7 +49,7 @@ http://package.elm-lang.org/packages/elm-lang/core/5.0.0/Platform-Sub
 https://www.elm-tutorial.org/en/03-subs-cmds/01-subs.html
 -}
 subscriptions : Model -> Sub Msg
-subscriptions _ = MyKeyboard.downs (\_ -> Hit)
+subscriptions _ = MyKeyboard.downs Hit
 
 
 --

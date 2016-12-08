@@ -1,16 +1,7 @@
-effect module MyKeyboard where { subscription = MySub } exposing
-  ( KeyCode
-  , presses, downs, ups
-  )
+effect module MyKeyboard where { subscription = MySub } exposing (downs)
 
-{-| This library lets you listen to global keyboard events.
-
-# Key Codes
-@docs KeyCode
-
-# Subscriptions
-@docs presses, downs, ups
-
+{-|
+TODO: 설명 보충
 -}
 
 import Dict
@@ -21,59 +12,26 @@ import Task exposing (Task)
 
 
 
--- KEY CODES
-
-
-{-| Keyboard keys can be represented as integers. These are called *key codes*.
-You can use [`toCode`](http://package.elm-lang.org/packages/elm-lang/core/latest/Char#toCode)
-and [`fromCode`](http://package.elm-lang.org/packages/elm-lang/core/latest/Char#fromCode)
-to convert between key codes and characters.
--}
-type alias KeyCode =
-  Int
-
-
-keyCode : Json.Decoder KeyCode
-keyCode =
-  Json.field "keyCode" Json.int
-
-
-
--- MOUSE EVENTS
-
-
-{-| Subscribe to all key presses.
--}
-presses : (KeyCode -> msg) -> Sub msg
-presses tagger =
-  subscription (MySub "keypress" tagger)
-
 
 {-| Subscribe to get codes whenever a key goes down.
 -}
-downs : (KeyCode -> msg) -> Sub msg
+downs : msg -> Sub msg
 downs tagger =
-  subscription (MySub "keydown" tagger)
-
-
-{-| Subscribe to get codes whenever a key goes up.
--}
-ups : (KeyCode -> msg) -> Sub msg
-ups tagger =
-  subscription (MySub "keyup" tagger)
+  subscription (MySub tagger)
 
 
 
 -- SUBSCRIPTIONS
 
 
+-- TODO: 유닛타입 정리
 type MySub msg
-  = MySub String (KeyCode -> msg)
+  = MySub msg
 
 
 subMap : (a -> b) -> MySub a -> MySub b
-subMap func (MySub category tagger) =
-  MySub category (tagger >> func)
+subMap func (MySub tagger) =
+  MySub (func tagger)
 
 
 
@@ -84,8 +42,9 @@ type alias State msg =
   Dict.Dict String (Watcher msg)
 
 
+-- TODO: 유닛타입 저일
 type alias Watcher msg =
-  { taggers : List (KeyCode -> msg)
+  { taggers : List msg
   , pid : Process.Id
   }
 
@@ -94,8 +53,9 @@ type alias Watcher msg =
 -- CATEGORIZE SUBSCRIPTIONS
 
 
+-- TODO: 유닛타입 저일
 type alias SubDict msg =
-  Dict.Dict String (List (KeyCode -> msg))
+  Dict.Dict String (List msg)
 
 
 categorize : List (MySub msg) -> SubDict msg
@@ -109,9 +69,10 @@ categorizeHelp subs subDict =
     [] ->
       subDict
 
-    MySub category tagger :: rest ->
+    MySub tagger :: rest ->
       categorizeHelp rest <|
-        Dict.update category (categorizeHelpHelp tagger) subDict
+        -- TODO: 음
+        Dict.update "keydown" (categorizeHelpHelp tagger) subDict
 
 
 categorizeHelpHelp : a -> Maybe (List a) -> Maybe (List a)
@@ -133,9 +94,13 @@ init =
   Task.succeed Dict.empty
 
 
+-- TODO: 없애기
+category : String
+category = "keydown"
+
+
 type alias Msg =
   { category : String
-  , keyCode : KeyCode
   }
 
 
@@ -146,6 +111,7 @@ type alias Msg =
 onEffects : Platform.Router msg Msg -> List (MySub msg) -> State msg -> Task Never (State msg)
 onEffects router newSubs oldState =
   let
+
     leftStep category {pid} task =
       Process.kill pid &> task
 
@@ -153,9 +119,29 @@ onEffects router newSubs oldState =
       Task.map (Dict.insert category (Watcher taggers pid)) task
 
     rightStep category taggers task =
-      task
-        |> Task.andThen (\state -> Process.spawn (Dom.onDocument category keyCode (Platform.sendToSelf router << Msg category))
-        |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state)))
+      let
+        -- 별 의미없이 있는 함수. 원래는 onDocument 콜백의 결과로 주어지는
+        -- 키코드를 파싱하는데 쓰는 함수지만, 본 예제에선 키코드 값을 버리므로
+        -- 의미가 없다.
+        -- Reference: http://package.elm-lang.org/packages/elm-lang/core/5.0.0/Json-Decode
+        keyCode : Json.Decoder ()
+        keyCode = Json.succeed ()
+
+        -- onDocument 함수에 넣을 콜백함수
+        callBack : () -> Task Never ()
+        callBack () = Platform.sendToSelf router (Msg category)
+
+        -- onDocument 호출로 생성한 프로미스
+        -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
+        promise : Task Never Never
+        promise = Dom.onDocument "keydown" keyCode callBack
+
+      in
+        task
+        |> Task.andThen (
+          \state -> Process.spawn promise
+          |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
+        )
   in
     Dict.merge
       leftStep
@@ -167,7 +153,7 @@ onEffects router newSubs oldState =
 
 
 onSelfMsg : Platform.Router msg Msg -> Msg -> State msg -> Task Never (State msg)
-onSelfMsg router {category,keyCode} state =
+onSelfMsg router {category} state =
   case Dict.get category state of
     Nothing ->
       Task.succeed state
@@ -175,7 +161,7 @@ onSelfMsg router {category,keyCode} state =
     Just {taggers} ->
       let
         send tagger =
-          Platform.sendToApp router (tagger keyCode)
+          Platform.sendToApp router (tagger)
       in
         Task.sequence (List.map send taggers)
           |> Task.andThen (\_ -> Task.succeed state)

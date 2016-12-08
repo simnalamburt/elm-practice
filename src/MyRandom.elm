@@ -1,10 +1,36 @@
-{-|
-모듈을 `effect module`로 선언하고, 뒤에 `{ command = MyCmd }` 이런식으로 `MyCmd`
-타입을 선언하게되면, 그 모듈은 반드시 `init`, `onEffect`, `onSelfMsg`, `cmdMap`
-이 네가지 함수를 정의해야하게된다. 저 네 함수의 타입이 뭐가 되어야하는지는,
-컴파일러가 알고있다.
--}
 effect module MyRandom where { command = MyCmd } exposing (generate)
+{-|
+모듈을 effect module로 선언하면, 기본적으로 아래의 세 함수를 구현할 의무가
+생긴다.
+
+    init
+
+    onEffect
+
+    onSelfMsg
+
+위 세 함수의 타입은 Elm 컴파일러가 강제한다.
+
+그리고 뒤에 `command = MyCmd` 혹은 `subscription = MySub`을 선언하면, 아래의 두
+함수도 각각 추가로 구현할 의무가 생긴다
+
+    cmdMap
+
+    subMap
+
+위의 두 함수는 컴파일러가 타입을 강제하지는 않으나, 위의 모양대로 선언해주지
+않으면 모듈이 작동하지 않는다.
+
+그리고 `command = MyCmd` 혹은 `subscription = MySub`을 선언할경우, 컴파일러가
+아래의 두 함수를 제공해준다
+
+    command : MyCmd msg -> Cmd msg
+
+    subscription
+
+어디에도 위의 두 함수의 동작이 문서화되어있지 않아 명확치는 않으나, 각각 MyCmd를
+Cmd로 매핑해주고, MySub을 Sub으로 매핑해주는 함수인것으로 보인다.
+-}
 
 import Basics exposing (..)
 import List exposing ((::))

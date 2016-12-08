@@ -33,7 +33,29 @@ mapRng func genA =
     let (a, state1) = genA state0
     in (func a, state1)
 
-{-| Generate 32-bit integers in `[0, 10000)` -}
+{-| Generate a random value between 0 and 10000
+
+In the following example, we are trying to generate a number between 0 and 10000
+with the `intRng` generator. Each time we call `intRng` we need to provide a
+state. This will produce a random number and a *new* state to use if we want to
+run other generators later.
+
+So here it is done right, where we get a new state from each `intRng` call and
+thread that through.
+
+    state0 = initialState 12345
+
+    -- intRng state0 ==> (1594, state1)
+    -- intRng state1 ==> (2399, state2)
+    -- intRng state2 ==> (8750, state3)
+
+Notice that we use different states on each line. This is important! If you use
+the same state, you get the same results.
+
+    -- intRng state0 ==> (1594, state1)
+    -- intRng state0 ==> (1594, state1)
+    -- intRng state0 ==> (1594, state1)
+-}
 intRng : IntRng
 intRng state =
   let
@@ -119,33 +141,6 @@ initialState state =
     (s1 + 1, s2 + 1)
 
 
-{-| Generate a random value as specified by a given `GenericRng`.
-
-In the following example, we are trying to generate a number between 0 and 100
-with the `int 0 100` generator. Each time we call `step` we need to provide a
-state. This will produce a random number and a *new* state to use if we want to
-run other generators later.
-
-So here it is done right, where we get a new state from each `step` call and
-thread that through.
-
-    state0 = initialState 31415
-
-    -- step (int 0 100) state0 ==> (42, state1)
-    -- step (int 0 100) state1 ==> (31, state2)
-    -- step (int 0 100) state2 ==> (99, state3)
-
-Notice that we use different states on each line. This is important! If you use
-the same state, you get the same results.
-
-    -- step (int 0 100) state0 ==> (42, state1)
-    -- step (int 0 100) state0 ==> (42, state1)
-    -- step (int 0 100) state0 ==> (42, state1)
--}
-step : IntRng -> State -> (Int, State)
-step generator state = generator state
-
-
 --
 -- Effect Manager
 --
@@ -181,8 +176,7 @@ onEffects router commands state =
 
     MakeMyCmd generator :: rest ->
       let
-        (value, newState) =
-          step generator state
+        (value, newState) = generator state
       in
         Platform.sendToApp router value
           |> Task.andThen (\_ -> onEffects router rest newState)

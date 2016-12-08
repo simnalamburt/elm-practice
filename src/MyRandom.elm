@@ -1,4 +1,4 @@
-effect module MyRandom where { command = MyCmd } exposing ( int, generate )
+effect module MyRandom where { command = MyCmd } exposing (generate)
 
 import Basics exposing (..)
 import List exposing ((::))
@@ -11,16 +11,7 @@ import Tuple
 
 
 -- PRIMITIVE GENERATORS
-{-| Generate 32-bit integers in a given range.
-
-    int 0 10   -- an integer between zero and ten
-    int -5 5   -- an integer between -5 and 5
-
-    int minInt maxInt  -- an integer in the widest range feasible
-
-This function *can* produce values outside of the range [[`minInt`](#minInt),
-[`maxInt`](#maxInt)] but sufficient randomness is not guaranteed.
--}
+{-| Generate 32-bit integers in `[0, 10000)` -}
 int : Generator Int
 int seed =
   let
@@ -28,8 +19,15 @@ int seed =
     hi = 10000
     k = hi - lo + 1
     base = 2147483561 -- 2^31 - 87
+
+    iLogBase : Int -> Int -> Int
+    iLogBase b i =
+      if i < b then 1
+      else 1 + iLogBase b (i // b)
+
     n = iLogBase base k
 
+    f : Int -> Int -> State -> (Int, State)
     f n acc state =
       case n of
         0 -> (acc, state)
@@ -39,8 +37,7 @@ int seed =
           in
             f (n - 1) (x + acc * base) nextState
 
-    (v, nextState) =
-      f n 1 seed.state
+    (v, nextState) = f n 1 seed.state
   in
     (
       lo + v % k,
@@ -48,10 +45,6 @@ int seed =
     )
 
 
-iLogBase : Int -> Int -> Int
-iLogBase b i =
-  if i < b then 1
-  else 1 + iLogBase b (i // b)
 
 
 
@@ -120,11 +113,10 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
 step : Generator Int -> Seed -> (Int, Seed)
-step generator seed =
-  generator seed
+step generator seed = generator seed
 
 
-{-| Create a &ldquo;seed&rdquo; of randomness which makes it possible to
+{-| Create a `seed` of randomness which makes it possible to
 generate random values. If you use the same seed many times, it will result
 in the same thing every time! A good way to get an unexpected seed is to use
 the current time.
@@ -193,9 +185,9 @@ tutorial][arch] which has a section specifically [about random values][rand].
 [arch]: https://evancz.gitbooks.io/an-introduction-to-elm/content/architecture/index.html
 [rand]: https://evancz.gitbooks.io/an-introduction-to-elm/content/architecture/effects/random.html
 -}
-generate : (Int -> msg) -> Generator Int -> Cmd msg
-generate tagger generator =
-  command (MakeMyCmd (map tagger generator))
+generate : (Int -> msg) -> Cmd msg
+generate tagger =
+  command (MakeMyCmd (map tagger int))
 
 
 type MyCmd msg = MakeMyCmd (Generator msg)

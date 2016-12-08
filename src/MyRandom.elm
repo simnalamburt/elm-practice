@@ -12,7 +12,7 @@ import Tuple
 
 -- PRIMITIVE GENERATORS
 {-| Generate 32-bit integers in `[0, 10000)` -}
-int : Generator Int
+int : CustomGenerator Int
 int seed =
   let
     lo = 0
@@ -54,7 +54,7 @@ int seed =
 
 {-| Transform the values produced by a generator. The following examples show
 how to generate booleans and letters based on a basic integer generator.  -}
-map : (Int -> msg) -> Generator Int -> Generator msg
+map : (Int -> msg) -> CustomGenerator Int -> CustomGenerator msg
 map func genA =
   \seed0 ->
     let (a, seed1) = genA seed0
@@ -66,14 +66,14 @@ map func genA =
 -- IMPLEMENTATION
 
 
-{-| A `Generator` is like a recipe for generating certain random values. So a
-`Generator Int` describes how to generate integers and a `Generator String`
+{-| A `CustomGenerator` is like a recipe for generating certain random values. So a
+`CustomGenerator Int` describes how to generate integers and a `CustomGenerator String`
 describes how to generate strings.
 
 To actually *run* a generator and produce the random values, you need to use
 functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 -}
-type alias Generator a = Seed -> (a, Seed)
+type alias CustomGenerator a = Seed -> (a, Seed)
 
 
 type alias State = (Int, Int)
@@ -89,7 +89,7 @@ type alias Seed =
   }
 
 
-{-| Generate a random value as specified by a given `Generator`.
+{-| Generate a random value as specified by a given `CustomGenerator`.
 
 In the following example, we are trying to generate a number between 0 and 100
 with the `int 0 100` generator. Each time we call `step` we need to provide a
@@ -112,7 +112,7 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
-step : Generator Int -> Seed -> (Int, Seed)
+step : CustomGenerator Int -> Seed -> (Int, Seed)
 step generator seed = generator seed
 
 
@@ -190,7 +190,7 @@ generate tagger =
   command (MakeMyCmd (map tagger int))
 
 
-type MyCmd msg = MakeMyCmd (Generator msg)
+type MyCmd msg = MakeMyCmd (CustomGenerator msg)
 
 
 cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int

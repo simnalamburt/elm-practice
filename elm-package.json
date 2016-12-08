@@ -1,13 +1,10 @@
 {
     "version": "0.0.0",
-    "summary": "The MQTT client for Elm",
-    "repository": "https://github.com/simnalamburt/elm-mqtt.git",
+    "summary": "Practice for Elm Effect Manager",
+    "repository": "https://github.com/simnalamburt/elm-practice",
     "license": "MIT/Apache-2.0",
     "source-directories": [
         "src"
-    ],
-    "exposed-modules": [
-        "Mqtt"
     ],
     "native-modules": true,
     "dependencies": {

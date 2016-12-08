@@ -1,3 +1,9 @@
+{-|
+모듈을 `effect module`로 선언하고, 뒤에 `{ command = MyCmd }` 이런식으로 `MyCmd`
+타입을 선언하게되면, 그 모듈은 반드시 `init`, `onEffect`, `onSelfMsg`, `cmdMap`
+이 네가지 함수를 정의해야하게된다. 저 네 함수의 타입이 뭐가 되어야하는지는,
+컴파일러가 알고있다.
+-}
 effect module MyRandom where { command = MyCmd } exposing (generate)
 
 import Basics exposing (..)

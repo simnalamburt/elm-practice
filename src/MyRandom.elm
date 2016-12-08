@@ -21,13 +21,12 @@ import Tuple
 This function *can* produce values outside of the range [[`minInt`](#minInt),
 [`maxInt`](#maxInt)] but sufficient randomness is not guaranteed.
 -}
-int : Int -> Int -> Generator Int
-int a b =
-  GenFn <| \(Seed seed) ->
+int : Generator Int
+int =
+  let fn = \(Seed seed) ->
     let
-      (lo,hi) =
-        if a < b then (a,b) else (b,a)
-
+      lo = 0
+      hi = 10000
       k = hi - lo + 1
       -- 2^31 - 87
       base = 2147483561
@@ -48,14 +47,14 @@ int a b =
       ( lo + v % k
       , Seed { seed | state = nextState }
       )
+  in
+    GenFn fn
 
 
 iLogBase : Int -> Int -> Int
 iLogBase b i =
-  if i < b then
-    1
-  else
-    1 + iLogBase b (i // b)
+  if i < b then 1
+  else 1 + iLogBase b (i // b)
 
 
 

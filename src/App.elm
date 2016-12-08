@@ -1,6 +1,6 @@
 import Html exposing (..)
 import Html.Events exposing (..)
-import MyRandom
+import MyRandom exposing (generate, int)
 
 main = Html.program
   {
@@ -24,7 +24,7 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Roll ->
-      (model, MyRandom.generate NewFace (MyRandom.int 1 6))
+      (model, generate NewFace int)
     NewFace newFace ->
       (Model newFace, Cmd.none)
 

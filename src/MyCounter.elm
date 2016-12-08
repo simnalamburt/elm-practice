@@ -331,10 +331,19 @@ onEffects router commands state =
           |> Task.andThen (\_ -> onEffects router rest newState)
 
 
-{-| TODO: 설명 보강 -}
+{-| SelfMsg를 처리하는 함수
+
+Platform.sendToApp 함수를 호출하면 앱에 메시지가 간다. Platform.sendToSelf
+함수를 호출하면 전송한 메시지가 이 모듈에게 돌아온다. 이때 그 자기자신에게 보낸
+메시지를 처리하는 함수가 바로 onSelfMsg 함수이다.
+
+이 예제에서는 SelfMsg를 전송할 일이 없으므로, 단순히 입력받은 state를 바로
+반환한것으로 구현하였다. -}
 onSelfMsg : Platform.Router msg Never -> Never -> State -> Task Never State
-onSelfMsg _ _ state =
-  Task.succeed state
+--                              ^^^^^    ^^^^^
+-- 절대 SelfMsg가 발생할 일이 없으므로, SelfMsg의 타입이 들어가야할 자리에 Never
+-- 타입을 넣어주었다.
+onSelfMsg _ _ state = Task.succeed state
 
 
 {-| TODO: 뭐하는 함수인지 정확히 알아내기
@@ -342,6 +351,8 @@ onSelfMsg _ _ state =
 라이브러리 개발자, 유저 둘 다 이 함수를 직접 호출할일이 없다. Elm 런타임이
 호출하는 함수인것으로 보인다. `init`, `onEffects`, `onSelfMsg` 함수와는 달리 이
 함수는 타입이 강제되지는 않으나, 아래의 꼴대로 정의되지 않으면 모듈이 제대로
-작동하지 않는다. -}
+작동하지 않는다.
+
+공식문서에 이 함수에 관한 설명이 없어서, 어떻게 쓰이는 함수인지 알수가 없다. -}
 cmdMap : (ty1 -> ty2) -> MyCmd ty1 -> MyCmd ty2
 cmdMap fn (MakeMyCmd counter) = MakeMyCmd (mapCounter fn counter)

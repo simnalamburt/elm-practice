@@ -89,7 +89,8 @@ Cmd로 매핑해주고, MySub을 Sub으로 매핑해주는 함수인것으로 �
 만들것이다. 함수마다 전부 주석을 달아두었으니, 차례대로 천천히 읽으면 이해에
 도움이 될것이다.
 
--}
+유저에게 노출되는 함수는 `count` 단 하나뿐이지만, 이를 위해 많은 밑작업을
+해줘야한다. -}
 
 import Platform.Cmd exposing (Cmd)
 import Task exposing (Task)
@@ -218,10 +219,25 @@ newState = { howMany = 0 }
 --
 -- Effect Manager
 --
-{-| TODO: 설명 -}
+{-| Elm이 시켜서 만든 타입. `type alias`로 선언할경우 컴파일에러가 나오므로,
+반드시 그냥 `type`으로 만들어주도록 하자. -}
 type MyCmd msg = MakeMyCmd (GenericCounter msg)
 
-{-| TODO: 설명 -}
+{-| 유저에게 노출되는 함수. 유저는 이 함수를 아래와 같은 방식으로 사용하게된다.
+
+    type Msg = Count | NewCount Int
+
+    update : Msg -> Model -> (Model, Cmd Msg)
+    update msg model =
+      case msg of
+        Count -> (model, MyCounter.count NewCount)
+        --               ^^^^^^^^^^^^^^^ ^^^^^^^^
+        --                count 함수에    컨스트럭터를 넘기면
+
+        NewCount number -> (Just number, Cmd.none)
+        --^^^^^^
+        -- Elm 런타임이 Int를 그 컨스트럭터로 감싸서 유저에게 돌려준다.
+-}
 count : (Int -> msg) -> Cmd msg
 count tagger =
   let
@@ -255,22 +271,57 @@ count tagger =
     result
 
 
-{-| TODO: 설명 -}
-cmdMap : (ty -> msg) -> MyCmd ty -> MyCmd msg
-cmdMap fn (MakeMyCmd counter) = MakeMyCmd (mapCounter fn counter)
+{-| 프로그램이 켜진 직후 State가 어떤 값일지 정의하는 함수.
 
+Task는 js의 promise, 러스트/스칼라의 future와 유사한 자료형인데, 자세한것은
+[공식문서] 참고. 모나드 쓰듯이 Task.andThen으로 체이닝 해가며 사용하면 된다.
 
-{-| TODO: 설명 -}
+    someAsyncJob
+      |> Tash.andThen anotherAsyncJob
+      |> Tash.andThen blablaAsyncJob
+
+[공식문서]: http://package.elm-lang.org/packages/elm-lang/core/latest/Task
+-}
 init : Task Never State
+--          ^^^^^
+-- 실패할리 없는 함수이므로, Task 타입의 첫번째 타입변수에 Never 타입이 들어갔다.
 init = Task.succeed newState
 
 
-{-| TODO: 설명 -}
-onEffects : Platform.Router Int Never -> List (MyCmd Int) -> State -> Task Never State
+{-| Elm 런타임에 의해 호출되는 함수이며, 상기했듯이 이펙트 매니저의 세팅에 따라
+타입명세가 달라지는 함수.
+
+함수의 첫번째 인자인 [Router]는 `MyCounter` Effect Manager가 메인 어플리케이션인
+`App.elm`로 메시지를 보낼때 사용하는 핸들이다. 이 타입 안의 값을 직접 조작할
+일은 없고, `Platform.sendToApp` 혹은 `Platform.sendToSelf` 함수를 호출할때에
+인자로만 쓰인다.
+
+두번째 파라미터인 `List (MyCmd msg)` 는 현재 수행해야할 MyCmd(커맨드들)의
+배열이다. 배열에 현재 수행해야 할 커맨드가 하나도 없다면, 바로 `Task.succeed
+state`를 리턴하면 된다. 하지만 수행해야 할 커맨드가 하나 이상 있다면, 배열이 빌
+때까지 onEffects 함수를 재귀출하여 모든 명령을 수행해야한다.
+
+세번째 파라미터인 `State`는 말 그대로 `onEffects` 함수가 호출되는 시점의 현재
+`State`이다. 맨 처음 `onEffects` 함수가 호출될 때엔 `init` 함수의 결과로 반환된
+`State`가 파라미터로 주어지며, 그 다음번 `onEffects` 함수가 호출될때엔 직전의
+`onEffects` 함수가 반환한 `State`가 파라미터로 주어진다.
+
+리턴값으로는 MyCmd를 수행한 뒤 변화한 타입을 `Task err State`의 형태로 반환하면
+된다. 단 본 예제의 경우 `onEffects` 함수가 실패할 수 없기때문에 `err` 타입변수에
+`Never` 타입이 입력되어있다.
+
+[Router]: http://package.elm-lang.org/packages/elm-lang/core/5.0.0/Platform#Router
+-}
+onEffects
+  : Platform.Router msg Never -> List (MyCmd msg) -> State -> Task Never State
+  --                    ^^^^^                                      ^^^^^
+  -- 이 프로그램에선 SelfMsg가 없으므로, Router의 두번째 타입 변수에 Never
+  -- 타입이 들어갔다. 마찬가지로 리턴값 역시, 실패할 리 없는 함수이므로 Task
+  -- 타입의 첫번째 타입변수에 Never 타입이 들어갔다.
 onEffects router commands state =
   case commands of
-    [] ->
-      Task.succeed state
+    -- 아무 커맨드가 없다.
+    [] -> Task.succeed state
 
     MakeMyCmd generator :: rest ->
       let
@@ -280,7 +331,17 @@ onEffects router commands state =
           |> Task.andThen (\_ -> onEffects router rest newState)
 
 
-{-| TODO: 설명 -}
+{-| TODO: 설명 보강 -}
 onSelfMsg : Platform.Router msg Never -> Never -> State -> Task Never State
 onSelfMsg _ _ state =
   Task.succeed state
+
+
+{-| TODO: 뭐하는 함수인지 정확히 알아내기
+
+라이브러리 개발자, 유저 둘 다 이 함수를 직접 호출할일이 없다. Elm 런타임이
+호출하는 함수인것으로 보인다. `init`, `onEffects`, `onSelfMsg` 함수와는 달리 이
+함수는 타입이 강제되지는 않으나, 아래의 꼴대로 정의되지 않으면 모듈이 제대로
+작동하지 않는다. -}
+cmdMap : (ty1 -> ty2) -> MyCmd ty1 -> MyCmd ty2
+cmdMap fn (MakeMyCmd counter) = MakeMyCmd (mapCounter fn counter)

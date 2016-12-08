@@ -32,9 +32,10 @@ effect module MyRandom where { command = MyCmd, subscription = MySub }
 
 봐야할것
 --------
-1.  [`MyRandom.elm`][code]
-2.  [`Platform` 모듈의 Effect Manager Helpers][helper]
-3.  [`Task` 모듈의 Commands 관련 함수들](http://package.elm-lang.org/packages/elm-lang/core/latest/Task#commands)
+1.  `command`만 있는 간단한 Effect Module 예제 : [`MyRandom.elm`][code]
+1.  `subscription`만 있는 간단한 Effect Moduel 예제 : [`LocalStorage.elm`](https://github.com/fredcy/localstorage/blob/master/src/LocalStorage.elm)
+1.  [`Platform` 모듈의 Effect Manager Helpers][helper]
+1.  [`Task` 모듈의 Commands 관련 함수들](http://package.elm-lang.org/packages/elm-lang/core/latest/Task#commands)
 
 --------
 

@@ -6,9 +6,13 @@ Elm Effect Manager Practice
 elm-reactor
 
 # http://127.0.0.1:8000/src/CommandExample.elm
+# http://127.0.0.1:8000/src/SubscriptionExample.elm
 ```
 
-### command 예제 보러가기: [`MyCounter.elm`](src/MyCounter.elm)
+아래 코드들의 주석에 설명을 자세히 달아두었다.
+
+- command 예제: [`MyCounter.elm`](src/MyCounter.elm)
+- subscription 예제: [`MyEnter.elm`](src/MyEnter.elm)
 
 <br>
 

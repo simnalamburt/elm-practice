@@ -2,7 +2,7 @@ Elm Effect Manager Practice
 ========
 Practice for making [effect managers].
 
-```
+```bash
 elm-reactor
 
 # See http://127.0.0.1:8000/src/App.elm

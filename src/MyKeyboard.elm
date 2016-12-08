@@ -17,7 +17,7 @@ import Task exposing (Task)
 -}
 downs : msg -> Sub msg
 downs tagger =
-  subscription (MySub tagger)
+  subscription (MakeMySub tagger)
 
 
 
@@ -25,13 +25,11 @@ downs tagger =
 
 
 -- TODO: 유닛타입 정리
-type MySub msg
-  = MySub msg
+type MySub msg = MakeMySub msg
 
 
 subMap : (a -> b) -> MySub a -> MySub b
-subMap func (MySub tagger) =
-  MySub (func tagger)
+subMap func (MakeMySub tagger) = MakeMySub (func tagger)
 
 
 
@@ -69,10 +67,13 @@ categorizeHelp subs subDict =
     [] ->
       subDict
 
-    MySub tagger :: rest ->
-      categorizeHelp rest <|
-        -- TODO: 음
-        Dict.update "keydown" (categorizeHelpHelp tagger) subDict
+    -- TODO: 정리하기
+    mySub :: rest ->
+      let
+        (MakeMySub tagger) = mySub
+        newDict = Dict.update "keydown" (categorizeHelpHelp tagger) subDict
+      in
+      categorizeHelp rest newDict
 
 
 categorizeHelpHelp : a -> Maybe (List a) -> Maybe (List a)

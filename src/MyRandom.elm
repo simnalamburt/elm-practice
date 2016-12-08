@@ -23,7 +23,7 @@ This function *can* produce values outside of the range [[`minInt`](#minInt),
 -}
 int : Generator Int
 int =
-  let fn = \(Seed seed) ->
+  let fn = \seed ->
     let
       lo = 0
       hi = 10000
@@ -44,8 +44,9 @@ int =
       (v, nextState) =
         f n 1 seed.state
     in
-      ( lo + v % k
-      , Seed { seed | state = nextState }
+      (
+        lo + v % k,
+        { seed | state = nextState }
       )
   in
     GenFn fn
@@ -94,11 +95,11 @@ type alias State = (Int, Int)
 {-| A `Seed` is the source of randomness in this whole system. Whenever
 you want to use a generator, you need to pair it with a seed.
 -}
-type Seed =
-  Seed
-    { state : State
-    , next  : State -> (Int, State)
-    }
+type alias Seed =
+  {
+    state : State,
+    next  : State -> (Int, State)
+  }
 
 
 {-| Generate a random value as specified by a given `Generator`.
@@ -136,10 +137,10 @@ the current time.
 -}
 initialSeed : Int -> Seed
 initialSeed n =
-  Seed
-    { state = initState n
-    , next = next
-    }
+  {
+    state = initState n,
+    next = next
+  }
 
 
 {-| Produce the initial generator state. Distinct arguments should be likely

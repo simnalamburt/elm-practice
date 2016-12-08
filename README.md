@@ -8,7 +8,7 @@ elm-reactor
 # See http://127.0.0.1:8000/src/App.elm
 ```
 
-### [`MyCounter.elm` 보러가기][code]
+### command 예제 보러가기: [`MyCounter.elm`](src/MyCounter.elm)
 
 <br>
 
@@ -42,7 +42,6 @@ effect module MyRandom where { command = MyCmd, subscription = MySub }
 license] and the [Apache License (Version 2.0)]. See [COPYRIGHT] for details.
 
 [Effect Manager]: https://guide.elm-lang.org/effect_managers/
-[code]: https://github.com/simnalamburt/elm-practice/blob/master/src/MyCounter.elm
 [`Random.elm`]: https://github.com/elm-lang/core/blob/master/src/Random.elm
 [MIT license]: LICENSE-MIT
 [Apache License (Version 2.0)]: LICENSE-APACHE

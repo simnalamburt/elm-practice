@@ -91,14 +91,8 @@ Cmd로 매핑해주고, MySub을 Sub으로 매핑해주는 함수인것으로 �
 
 -}
 
--- TODO: 필요없는거 지우기
-import Basics exposing (..)
-import List exposing ((::))
-import Platform
 import Platform.Cmd exposing (Cmd)
 import Task exposing (Task)
-import Time
-import Tuple
 
 
 --
@@ -246,6 +240,7 @@ init : Task Never State
 init = Task.succeed newState
 
 
+{-| TODO: 설명 -}
 onEffects : Platform.Router Int Never -> List (MyCmd Int) -> State -> Task Never State
 onEffects router commands state =
   case commands of
@@ -260,6 +255,7 @@ onEffects router commands state =
           |> Task.andThen (\_ -> onEffects router rest newState)
 
 
+{-| TODO: 설명 -}
 onSelfMsg : Platform.Router msg Never -> Never -> State -> Task Never State
 onSelfMsg _ _ state =
   Task.succeed state

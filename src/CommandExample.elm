@@ -1,5 +1,5 @@
 {-| MyCounter 시연용 더미 어플리케이션. -}
-import Html exposing (Html, div, button, h1, text)
+import Html exposing (Html, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault, map)
@@ -96,22 +96,28 @@ view model =
     content : Html Msg
     content =
       map toString model
-      |> withDefault "push" -- model이 `Nothing`이면 이 글자가 표시됨
+      |> withDefault "click" -- model이 `Nothing`이면 이 글자가 표시됨
       |> text
 
     -- Simple CSS
-    myStyle = style [
+    containerStyle = style [
+      ("text-align", "center")
+    ]
+
+    buttonStyle = style [
       ("background", "#5a5a5a"),
       ("border", "none"),
       ("border-radius", "100%"),
       ("width", "200px"),
       ("height", "200px"),
-      ("margin", "30px auto"),
-      ("padding", "10px"),
+      ("margin", "50px"),
+      ("padding", "0"),
       ("font-size", "50pt"),
       ("color", "white"),
-      ("display", "block"),
+      ("display", "inline-block"),
       ("outline", "none")
     ]
   in
-    button [ onClick Count, myStyle ] [ content ]
+    div [ containerStyle ] [
+      button [ onClick Count, buttonStyle ] [ content ]
+    ]

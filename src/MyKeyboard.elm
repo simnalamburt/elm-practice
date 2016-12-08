@@ -22,9 +22,6 @@ downs tagger =
 
 
 -- SUBSCRIPTIONS
-
-
--- TODO: 유닛타입 정리
 type MySub msg = MakeMySub msg
 
 
@@ -32,72 +29,22 @@ subMap : (a -> b) -> MySub a -> MySub b
 subMap func (MakeMySub tagger) = MakeMySub (func tagger)
 
 
-
--- EFFECT MANAGER STATE
-
-
-type alias State msg =
-  Dict.Dict String (Watcher msg)
-
-
--- TODO: 유닛타입 저일
 type alias Watcher msg =
   { taggers : List msg
   , pid : Process.Id
   }
 
 
-
 -- CATEGORIZE SUBSCRIPTIONS
-
-
--- TODO: 유닛타입 저일
-type alias SubDict msg =
-  Dict.Dict String (List msg)
-
-
-categorize : List (MySub msg) -> SubDict msg
-categorize subs =
-  categorizeHelp subs Dict.empty
-
-
-categorizeHelp : List (MySub msg) -> SubDict msg -> SubDict msg
-categorizeHelp subs subDict =
-  case subs of
-    [] ->
-      subDict
-
-    -- TODO: 정리하기
-    mySub :: rest ->
-      let
-        (MakeMySub tagger) = mySub
-        newDict = Dict.update "keydown" (categorizeHelpHelp tagger) subDict
-      in
-      categorizeHelp rest newDict
-
-
-categorizeHelpHelp : a -> Maybe (List a) -> Maybe (List a)
-categorizeHelpHelp value maybeValues =
-  case maybeValues of
-    Nothing ->
-      Just [value]
-
-    Just values ->
-      Just (value :: values)
-
+categorize : List (MySub msg) -> List msg
+categorize subs = List.map (\(MakeMySub msg) -> msg) subs
 
 
 -- EFFECT MANAGER
-
+type alias State msg = Dict.Dict String (Watcher msg)
 
 init : Task Never (State msg)
-init =
-  Task.succeed Dict.empty
-
-
--- TODO: 없애기
-category : String
-category = "keydown"
+init = Task.succeed Dict.empty
 
 
 type alias Msg =
@@ -112,13 +59,18 @@ type alias Msg =
 onEffects : Platform.Router msg Msg -> List (MySub msg) -> State msg -> Task Never (State msg)
 onEffects router newSubs oldState =
   let
+    -- TODO: 안쓰는 카테고리 다 삭제
 
+    -- TODO: pid는 왜나올까
+    leftStep : String -> Watcher msg -> Task Never (State msg) -> Task Never (State msg)
     leftStep category {pid} task =
       Process.kill pid &> task
 
+    bothStep : String -> Watcher msg -> List msg -> Task Never (State msg) -> Task Never (State msg)
     bothStep category {pid} taggers task =
       Task.map (Dict.insert category (Watcher taggers pid)) task
 
+    rightStep : String -> List msg -> Task Never (State msg) -> Task Never (State msg)
     rightStep category taggers task =
       let
         -- 별 의미없이 있는 함수. 원래는 onDocument 콜백의 결과로 주어지는
@@ -142,14 +94,17 @@ onEffects router newSubs oldState =
         |> Task.andThen (
           \state -> Process.spawn promise
           |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
+          -- TODO: Watcher는 멀까
         )
+
+    -- TODO: 동작 이해해서 정리하기
   in
     Dict.merge
       leftStep
       bothStep
       rightStep
       oldState
-      (categorize newSubs)
+      (Dict.insert "keydown" (categorize newSubs) Dict.empty) -- TODO: 정리
       (Task.succeed Dict.empty)
 
 

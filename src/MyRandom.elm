@@ -166,6 +166,8 @@ next (state1, state2) =
 --
 -- Effect Manager
 --
+type MyCmd msg = MakeMyCmd (GenericRng msg)
+
 {-| Create a command that will generate random values.
 
 Read more about how to use this in your programs in [The Elm Architecture
@@ -175,16 +177,11 @@ tutorial][arch] which has a section specifically [about random values][rand].
 [rand]: https://evancz.gitbooks.io/an-introduction-to-elm/content/architecture/effects/random.html
 -}
 generate : (Int -> msg) -> Cmd msg
-generate tagger =
-  command (MakeMyCmd (mapRng tagger intRng))
-
-
-type MyCmd msg = MakeMyCmd (GenericRng msg)
+generate tagger = command (MakeMyCmd (mapRng tagger intRng))
 
 
 cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int
-cmdMap func (MakeMyCmd generator) =
-  MakeMyCmd (mapRng func generator)
+cmdMap func (MakeMyCmd generator) = MakeMyCmd (mapRng func generator)
 
 
 init : Task Never Seed

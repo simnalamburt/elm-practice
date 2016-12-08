@@ -37,17 +37,29 @@ mapRng func genA =
 intRng : IntRng
 intRng seed =
   let
-    lo = 0
-    hi = 10000
-    k = hi - lo + 1
-    base = 2147483561 -- 2^31 - 87
-
     iLogBase : Int -> Int -> Int
     iLogBase b i =
       if i < b then 1
       else 1 + iLogBase b (i // b)
 
-    n = iLogBase base k
+    next : State -> (Int, State)
+    next (state1, state2) =
+      -- Div always rounds down and so random numbers are biased
+      -- ideally we would use division that rounds towards zero so
+      -- that in the negative case it rounds up and in the positive case
+      -- it rounds down. Thus half the time it rounds up and half the time it
+      -- rounds down
+      let
+        k1 = state1 // magicNum1
+        rawState1 = magicNum0 * (state1 - k1 * magicNum1) - k1 * magicNum2
+        newState1 = if rawState1 < 0 then rawState1 + magicNum6 else rawState1
+        k2 = state2 // magicNum3
+        rawState2 = magicNum4 * (state2 - k2 * magicNum3) - k2 * magicNum5
+        newState2 = if rawState2 < 0 then rawState2 + magicNum7 else rawState2
+        z = newState1 - newState2
+        newZ = if z < 1 then z + magicNum8 else z
+      in
+        (newZ, (newState1, newState2))
 
     f : Int -> Int -> State -> (Int, State)
     f n acc state =
@@ -55,10 +67,15 @@ intRng seed =
         0 -> (acc, state)
         _ ->
           let
-            (x, nextState) = seed.next state
+            (x, nextState) = next state
           in
             f (n - 1) (x + acc * base) nextState
 
+    lo = 0
+    hi = 10000
+    k = hi - lo + 1
+    base = 2147483561 -- 2^31 - 87
+    n = iLogBase base k
     (v, nextState) = f n 1 seed.state
   in
     (
@@ -98,11 +115,7 @@ initState seed =
 
 {-| A `Seed` is the source of randomness in this whole system. Whenever you want
 to use a generator, you need to pair it with a seed. -}
-type alias Seed =
-  {
-    state : State,
-    next  : State -> (Int, State)
-  }
+type alias Seed = { state : State }
 
 {-| Create a `seed` of randomness which makes it possible to
 generate random values. If you use the same seed many times, it will result
@@ -110,11 +123,7 @@ in the same thing every time! A good way to get an unexpected seed is to use
 the current time.
 -}
 initialSeed : Int -> Seed
-initialSeed n =
-  {
-    state = initState n,
-    next = next
-  }
+initialSeed n = { state = initState n }
 
 
 {-| Generate a random value as specified by a given `GenericRng`.
@@ -142,25 +151,6 @@ the same seed, you get the same results.
 -}
 step : IntRng -> Seed -> (Int, Seed)
 step generator seed = generator seed
-
-next : State -> (Int, State)
-next (state1, state2) =
-  -- Div always rounds down and so random numbers are biased
-  -- ideally we would use division that rounds towards zero so
-  -- that in the negative case it rounds up and in the positive case
-  -- it rounds down. Thus half the time it rounds up and half the time it
-  -- rounds down
-  let
-    k1 = state1 // magicNum1
-    rawState1 = magicNum0 * (state1 - k1 * magicNum1) - k1 * magicNum2
-    newState1 = if rawState1 < 0 then rawState1 + magicNum6 else rawState1
-    k2 = state2 // magicNum3
-    rawState2 = magicNum4 * (state2 - k2 * magicNum3) - k2 * magicNum5
-    newState2 = if rawState2 < 0 then rawState2 + magicNum7 else rawState2
-    z = newState1 - newState2
-    newZ = if z < 1 then z + magicNum8 else z
-  in
-    (newZ, (newState1, newState2))
 
 
 --

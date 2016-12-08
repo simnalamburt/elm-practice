@@ -88,7 +88,7 @@ functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 type Generator a = GenFn (Seed -> (a, Seed))
 
 
-type State = State Int Int
+type alias State = (Int, Int)
 
 
 {-| A `Seed` is the source of randomness in this whole system. Whenever
@@ -153,7 +153,7 @@ initState seed =
     s1 = s %  (magicNum6-1)
     s2 = q %  (magicNum7-1)
   in
-    State (s1+1) (s2+1)
+    (s1 + 1, s2 + 1)
 
 
 magicNum0 = 40014
@@ -168,7 +168,7 @@ magicNum8 = 2147483562
 
 
 next : State -> (Int, State)
-next (State state1 state2) =
+next (state1, state2) =
   -- Div always rounds down and so random numbers are biased
   -- ideally we would use division that rounds towards zero so
   -- that in the negative case it rounds up and in the positive case
@@ -184,7 +184,7 @@ next (State state1 state2) =
     z = newState1 - newState2
     newZ = if z < 1 then z + magicNum8 else z
   in
-    (newZ, State newState1 newState2)
+    (newZ, (newState1, newState2))
 
 
 -- MANAGER

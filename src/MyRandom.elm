@@ -1,37 +1,69 @@
 effect module MyRandom where { command = MyCmd } exposing (generate)
 {-|
-모듈을 effect module로 선언하면, 기본적으로 아래의 세 함수를 구현할 의무가
-생긴다.
 
-    init
+effect module은 아래의 세 방식중 하나를 선택해서 선언해야한다.
 
-    onEffect
+    -- command만 있음
+    effect module MyModule where { command = MyCmd } exposing ..
 
-    onSelfMsg
+    -- subscription만 있음
+    effect module MyModule where { subscription = MySub } exposing ..
 
-위 세 함수의 타입은 Elm 컴파일러가 강제한다.
+    -- 둘다있음
+    effect module MyModule where
+      { command = MyCmd, subscription = MySub } exposing ..
 
-그리고 뒤에 `command = MyCmd` 혹은 `subscription = MySub`을 선언하면, 아래의 두
-함수도 각각 추가로 구현할 의무가 생긴다
+`command`와 `subscription` 둘중 최소한 하나는 구현해야한다. 이 `command`,
+`subscription`들을 Elm에선 "settings"라고 부른다.
 
-    cmdMap
+effect module을 선언하면, 기본적으로 아래의 세 함수를 구현할 의무가 생긴다.
 
-    subMap
+    init : Platform.Task Never a
 
-위의 두 함수는 컴파일러가 타입을 강제하지는 않으나, 위의 모양대로 선언해주지
-않으면 모듈이 작동하지 않는다.
+    onEffects
 
-그리고 `command = MyCmd` 혹은 `subscription = MySub`을 선언할경우, 컴파일러가
-아래의 두 함수를 제공해준다
+    onSelfMsg : Platform.Router a b -> b -> c -> Platform.Task Never c
 
+`onEffects` 함수의 타입은, settings에 따라 아래의 셋중 하나가 된다.
+
+    -- command만 있음
+    onEffects : Platform.Router a b -> List (MyCmd a)
+                -> c -> Platform.Task Never c
+
+    -- subscription만 있음
+    onEffects : Platform.Router a b -> List (MySub a)
+                -> c -> Platform.Task Never c
+
+    -- 둘다있음
+    onEffects : Platform.Router a b -> List (MyCmd a) -> List (MySub a)
+                -> c -> Platform.Task Never c
+
+`init`, `onEffects`, `onSelfMsg` 함수의 타입은 컴파일러에 의해 강제된다.
+
+setting에 따라 아래의 함수들 또한 구현해야한다.
+
+    -- command가 있을 경우 구현해야함
+    cmdMap : (a -> b) -> MyCmd a -> MyCmd b
+
+    -- subscription이 있을 경우 구현해야함
+    subMap : (a -> b) -> MySub a -> MySub b
+
+위의 두 함수는 컴파일러가 타입을 강제하지는 않는다. 허나 위의 모양대로 선언하지
+않으면 모듈이 작동하지 않을 수 있다.
+
+Effect module을 선언하면 구현해야하는 함수도 생기지만, 컴파일러가 개발자에게
+주는 함수도 생긴다. setting에 따라, 아래의 함수들이 주어진다.
+
+    -- command가 있을 경우 주어짐
     command : MyCmd msg -> Cmd msg
 
-    subscription
+    -- subscription이 있을 경우 주어짐
+    subscription : MySub msg -> Sub msg
 
 어디에도 위의 두 함수의 동작이 문서화되어있지 않아 명확치는 않으나, 각각 MyCmd를
 Cmd로 매핑해주고, MySub을 Sub으로 매핑해주는 함수인것으로 보인다.
--}
 
+-}
 import Basics exposing (..)
 import List exposing ((::))
 import Platform
@@ -44,7 +76,6 @@ import Tuple
 --
 -- Definition of Rng and its types
 --
-
 {-| A `GenericRng` is like a recipe for generating certain random values.  So a
 `IntRng` describes how to generate integers and a `GenericRng String` describes
 how to generate strings.

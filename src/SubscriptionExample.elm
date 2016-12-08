@@ -1,4 +1,4 @@
-{-| MyEnter 시연용 더미 어플리케이션. -}
+{-| MyKeyboard 시연용 더미 어플리케이션. -}
 import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (style)
 import MyKeyboard

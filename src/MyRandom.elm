@@ -22,34 +22,30 @@ This function *can* produce values outside of the range [[`minInt`](#minInt),
 [`maxInt`](#maxInt)] but sufficient randomness is not guaranteed.
 -}
 int : Generator Int
-int =
-  let fn = \seed ->
-    let
-      lo = 0
-      hi = 10000
-      k = hi - lo + 1
-      -- 2^31 - 87
-      base = 2147483561
-      n = iLogBase base k
+int seed =
+  let
+    lo = 0
+    hi = 10000
+    k = hi - lo + 1
+    base = 2147483561 -- 2^31 - 87
+    n = iLogBase base k
 
-      f n acc state =
-        case n of
-          0 -> (acc, state)
-          _ ->
-            let
-              (x, nextState) = seed.next state
-            in
-              f (n - 1) (x + acc * base) nextState
+    f n acc state =
+      case n of
+        0 -> (acc, state)
+        _ ->
+          let
+            (x, nextState) = seed.next state
+          in
+            f (n - 1) (x + acc * base) nextState
 
-      (v, nextState) =
-        f n 1 seed.state
-    in
-      (
-        lo + v % k,
-        { seed | state = nextState }
-      )
+    (v, nextState) =
+      f n 1 seed.state
   in
-    GenFn fn
+    (
+      lo + v % k,
+      { seed | state = nextState }
+    )
 
 
 iLogBase : Int -> Int -> Int
@@ -66,12 +62,10 @@ iLogBase b i =
 {-| Transform the values produced by a generator. The following examples show
 how to generate booleans and letters based on a basic integer generator.  -}
 map : (Int -> msg) -> Generator Int -> Generator msg
-map func (GenFn genA) =
-  GenFn <| \seed0 ->
-    let
-      (a, seed1) = genA seed0
-    in
-      (func a, seed1)
+map func genA =
+  \seed0 ->
+    let (a, seed1) = genA seed0
+    in (func a, seed1)
 
 
 
@@ -86,7 +80,7 @@ describes how to generate strings.
 To actually *run* a generator and produce the random values, you need to use
 functions like [`generate`](#generate) and [`initialSeed`](#initialSeed).
 -}
-type Generator a = GenFn (Seed -> (a, Seed))
+type alias Generator a = Seed -> (a, Seed)
 
 
 type alias State = (Int, Int)
@@ -126,7 +120,7 @@ the same seed, you get the same results.
     -- step (int 0 100) seed0 ==> (42, seed1)
 -}
 step : Generator Int -> Seed -> (Int, Seed)
-step (GenFn generator) seed =
+step generator seed =
   generator seed
 
 

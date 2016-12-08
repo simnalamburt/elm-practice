@@ -41,10 +41,10 @@ categorize subs = List.map (\(MakeMySub msg) -> msg) subs
 
 
 -- EFFECT MANAGER
-type alias State msg = Dict.Dict String (Watcher msg)
+type alias State msg = Maybe (Watcher msg)
 
 init : Task Never (State msg)
-init = Task.succeed Dict.empty
+init = Task.succeed Nothing
 
 
 type alias SelfMsg = ()
@@ -58,22 +58,17 @@ key : String
 key = "keydown"
 
 
+-- TODO: 이벤트핸들러 붙였다 떼었다 하면서 테스트하기
 onEffects : Platform.Router msg SelfMsg -> List (MySub msg) -> State msg -> Task Never (State msg)
 onEffects router newSubs oldState =
   let
-    -- TODO: 안쓰는 카테고리 다 삭제
+    bothStep : Watcher msg -> List msg -> Task Never (State msg) -> Task Never (State msg)
+    bothStep {pid} taggers task =
+      -- TODO: 이상해
+      Task.map (\task -> Just (Watcher taggers pid)) task
 
-    -- TODO: pid는 왜나올까
-    leftStep : String -> Watcher msg -> Task Never (State msg) -> Task Never (State msg)
-    leftStep category {pid} task =
-      Process.kill pid &> task
-
-    bothStep : String -> Watcher msg -> List msg -> Task Never (State msg) -> Task Never (State msg)
-    bothStep category {pid} taggers task =
-      Task.map (Dict.insert category (Watcher taggers pid)) task
-
-    rightStep : String -> List msg -> Task Never (State msg) -> Task Never (State msg)
-    rightStep category taggers task =
+    rightStep : List msg -> Task Never (State msg) -> Task Never (State msg)
+    rightStep taggers task =
       let
         -- 별 의미없이 있는 함수. 원래는 onDocument 콜백의 결과로 주어지는
         -- 키코드를 파싱하는데 쓰는 함수지만, 본 예제에선 키코드 값을 버리므로
@@ -95,29 +90,24 @@ onEffects router newSubs oldState =
         task
         |> Task.andThen (
           \state -> Process.spawn promise
-          |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
+          |> Task.andThen (\pid -> Task.succeed (Just (Watcher taggers pid)))
         )
 
-    leftMaybe : Maybe (Watcher msg)
-    leftMaybe = Dict.get key oldState
-
-    rightMaybe : Maybe (List msg)
-    rightMaybe = Dict.get key (Dict.insert key (categorize newSubs) Dict.empty)
+    -- TODO: 이름짓기
+    right : List msg
+    right = categorize newSubs
 
     merged : Task Never (State msg)
-    merged = case (leftMaybe, rightMaybe) of
-      (Nothing,   Nothing)    -> init
-      (Just left, Nothing)    -> leftStep key left init
-      (Nothing,   Just right) -> rightStep key right init
-      (Just left, Just right) -> bothStep key left right init
+    merged = case oldState of
+      Nothing   -> rightStep right init
+      Just left -> bothStep left right init
   in
     merged
 
 
 onSelfMsg : Platform.Router msg SelfMsg -> SelfMsg -> State msg -> Task Never (State msg)
 onSelfMsg router () state =
-  -- TODO: keydown이 여기 들어갈일이 없도록
-  case Dict.get key state of
+  case state of
     Nothing ->
       Task.succeed state
 

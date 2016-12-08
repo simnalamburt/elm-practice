@@ -53,6 +53,10 @@ type alias SelfMsg = ()
 (&>) task1 task2 =
   Task.andThen (\_ -> task2) task1
 
+-- TODO: 삭제
+key : String
+key = "keydown"
+
 
 onEffects : Platform.Router msg SelfMsg -> List (MySub msg) -> State msg -> Task Never (State msg)
 onEffects router newSubs oldState =
@@ -85,31 +89,35 @@ onEffects router newSubs oldState =
         -- onDocument 호출로 생성한 프로미스
         -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
         promise : Task Never Never
-        promise = Dom.onDocument "keydown" keyCode callBack
+        promise = Dom.onDocument key keyCode callBack
 
       in
         task
         |> Task.andThen (
           \state -> Process.spawn promise
           |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
-          -- TODO: Watcher는 멀까
         )
 
-    -- TODO: 동작 이해해서 정리하기
+    leftMaybe : Maybe (Watcher msg)
+    leftMaybe = Dict.get key oldState
+
+    rightMaybe : Maybe (List msg)
+    rightMaybe = Dict.get key (Dict.insert key (categorize newSubs) Dict.empty)
+
+    merged : Task Never (State msg)
+    merged = case (leftMaybe, rightMaybe) of
+      (Nothing,   Nothing)    -> init
+      (Just left, Nothing)    -> leftStep key left init
+      (Nothing,   Just right) -> rightStep key right init
+      (Just left, Just right) -> bothStep key left right init
   in
-    Dict.merge
-      leftStep
-      bothStep
-      rightStep
-      oldState
-      (Dict.insert "keydown" (categorize newSubs) Dict.empty) -- TODO: 정리
-      (Task.succeed Dict.empty)
+    merged
 
 
 onSelfMsg : Platform.Router msg SelfMsg -> SelfMsg -> State msg -> Task Never (State msg)
 onSelfMsg router () state =
   -- TODO: keydown이 여기 들어갈일이 없도록
-  case Dict.get "keydown" state of
+  case Dict.get key state of
     Nothing ->
       Task.succeed state
 

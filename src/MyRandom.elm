@@ -163,7 +163,7 @@ generate : (Int -> msg) -> Cmd msg
 generate tagger = command (MakeMyCmd (mapRng tagger intRng))
 
 
-cmdMap : (Int -> Int) -> MyCmd Int -> MyCmd Int
+cmdMap : (Int -> msg) -> MyCmd Int -> MyCmd msg
 cmdMap func (MakeMyCmd generator) = MakeMyCmd (mapRng func generator)
 
 

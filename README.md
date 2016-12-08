@@ -8,6 +8,8 @@ elm-reactor
 # See http://127.0.0.1:8000/src/App.elm
 ```
 
+### [`MyCounter.elm` 보러가기][code]
+
 Effect Manager란?
 --------
 Elm은 하스켈처럼, 모든 함수가 퓨어한 언어이다. 그래서 사이드이펙트를 가진
@@ -30,22 +32,14 @@ effect module MyRandom where { command = MyCmd, subscription = MySub }
 간단한 형태로 바꾸었다. 주석에 최대한 자세하게 설명을 달아두었으니, 다른
 개발자가 보고 이해할 수 있었으면 좋겠다.
 
-봐야할것
---------
-1.  `command`만 있는 간단한 Effect Module 예제 : [`MyRandom.elm`][code]
-1.  `subscription`만 있는 간단한 Effect Moduel 예제 : [`LocalStorage.elm`](https://github.com/fredcy/localstorage/blob/master/src/LocalStorage.elm)
-1.  [`Platform` 모듈의 Effect Manager Helpers][helper]
-1.  [`Task` 모듈의 Commands 관련 함수들](http://package.elm-lang.org/packages/elm-lang/core/latest/Task#commands)
-
 --------
 
 `elm-practice` is primarily distributed under the terms of both the [MIT
 license] and the [Apache License (Version 2.0)]. See [COPYRIGHT] for details.
 
 [Effect Manager]: https://guide.elm-lang.org/effect_managers/
+[code]: https://github.com/simnalamburt/elm-practice/blob/master/src/MyCounter.elm
 [`Random.elm`]: https://github.com/elm-lang/core/blob/master/src/Random.elm
-[code]: https://github.com/simnalamburt/elm-practice/blob/master/src/MyRandom.elm
-[helper]: http://package.elm-lang.org/packages/elm-lang/core/5.0.0/Platform#effect-manager-helpers
 [MIT license]: LICENSE-MIT
 [Apache License (Version 2.0)]: LICENSE-APACHE
 [COPYRIGHT]: COPYRIGHT

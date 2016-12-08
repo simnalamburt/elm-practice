@@ -1,6 +1,7 @@
-import Html exposing (..)
-import Html.Events exposing (..)
-import MyRandom exposing (generate)
+import Html exposing (Html, div, button, h1, text)
+import Html.Events exposing (onClick)
+import Maybe exposing (withDefault, map)
+import MyCounter
 
 main = Html.program
   {
@@ -11,22 +12,20 @@ main = Html.program
   }
 
 -- MODEL
-type alias Model = { dieFace : Int }
+type alias Model = Maybe Int
 
 init : (Model, Cmd Msg)
-init = (Model 1, Cmd.none)
+init = (Nothing, Cmd.none)
 
 -- UPDATE
-type Msg = Roll
-         | NewFace Int
+type Msg = Count
+         | NewCount Int
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Roll ->
-      (model, generate NewFace)
-    NewFace newFace ->
-      (Model newFace, Cmd.none)
+    Count -> (model, MyCounter.count NewCount)
+    NewCount number -> (Just number, Cmd.none)
 
 -- SUBSCRIPTIONS
 subscriptions : Model -> Sub Msg
@@ -36,6 +35,6 @@ subscriptions model = Sub.none
 view : Model -> Html Msg
 view model =
   div [] [
-    h1 [] [ text (toString model.dieFace) ],
-    button [ onClick Roll ] [ text "Roll" ]
+    button [ onClick Count ] [ text "Count" ],
+    h1 [] [ text (withDefault "버튼을 눌러보세요!" (map toString model)) ]
   ]

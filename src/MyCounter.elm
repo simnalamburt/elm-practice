@@ -104,12 +104,27 @@ import Task exposing (Task)
 아래와 같다.
 
     -- 타입변수에 Int를 넣어주면, 정수형을 세는 카운터가 된다.
-    intcounter : GenericCounter Int
+    intCounter : GenericCounter Int
 
     -- 최초 state
-    state = newState
+    state0 = newState
 
-    TODO: 예시 만들기
+    -- 카운터를 실행시킬때마다 업데이트된 새 state가 나오는데, 이를
+    -- 다음 호출때 새로이 넣어줘야한다.
+    intCounter state0   --> 0, state1
+    intCounter state1   --> 1, state2
+    intCounter state2   --> 2, state3
+    intCounter state3   --> 3, state4
+    intCounter state4   --> 4, state5
+
+    -- 업데이트된 새 state를 다음번 호출에 쓰지 않고, 낡은 state를 함수에 넣으면
+    -- 계속 같은 결과가 나온다
+    intCounter state0   --> 0, state1
+    intCounter state0   --> 0, state1
+    intCounter state0   --> 0, state1
+
+Elm은 함수가 사이드이펙트를 가질 수 없는 pure한 언어이기 때문에, 위와같이
+호출할때마다 state를 입력받고 새 state를 반환하도록 설계한것이다.
 
 타입변수에 다른 자료형을 넣어주면 아래와 같이 다양한 타입의 카운터를 만들 수
 있다.
@@ -125,7 +140,17 @@ import Task exposing (Task)
 위와 같은 기본형이 아닌 복잡한 카운터는, `mapCounter` 함수를 써서 만들어줄 수
 있다.
 
-    TODO: 예시 만들기
+    -- 0.0, 1.0, 2.0, 3.0, ...
+    floatCounter : GenericCounter Float
+    floatCounter = mapCounter toFloat intCounter
+
+    -- "0", "1", "2", "3", ...
+    stringCounter : GenericCounter String
+    stringCounter = mapCounter toString intCounter
+
+    -- Just 0, Just 1, Just 2, Just 3
+    maybeCounter : GenericCounter (Maybe Int)
+    maybeCounter = mapCounter Just intCounter
 
 어차피 정수형인 카운터를 위와같이 임의의 타입에 대해 구현할 수 있게 하는 이유는,
 이렇게 해야만 유저가 `update`함수에서 이 모듈을 사용할 수 있기 때문이다.
@@ -143,13 +168,15 @@ import Task exposing (Task)
 type alias GenericCounter ty = State -> (ty, State)
 
 
-{-|
+{-| 카운터를 받아, 새로운 타입의 카운터를 만들어주는 함수이다. 예를들어 아래와
+같이 하면, `GenericCounter Int`를 `GenericCounter String`으로 바꿀 수 있다.
 
-카운터를 받아, 새로운 타입의 카운터를 만들어주는 함수이다. 예를들어 아래와 같이
-하면, `GenericCounter Int`를 `GenericCounter String`으로 바꿀 수 있다.
+    -- 0, 1, 2, 3, ...
+    intCounter : GenericCounter Int
 
-    TODO: 설명
-
+    -- "0", "1", "2", "3", ...
+    stringCounter : GenericCounter String
+    stringCounter = mapCounter toString intCounter
 -}
 mapCounter : (ty1 -> ty2) -> GenericCounter ty1 -> GenericCounter ty2
 mapCounter mapFn original =
@@ -165,13 +192,9 @@ mapCounter mapFn original =
       (newResult, newState)
 
 
-{-| Int만 만들수 있는 카운터이다. 코드 길이가 지나치게 길어지는것을 막기위해
-선언하였다. -}
-type alias IntCounter = GenericCounter Int
-
 {-| 제일 기본적인 카운터인 `GenericCounter Int`의 구현체이다. 이 함수에
 `mapCounter` 함수를 씌워서 새로운 다른 카운터를 만들 수 있다. -}
-intCounter : IntCounter
+intCounter : GenericCounter Int
 intCounter oldState =
   let
     -- 지금까지 몇번 세었는지 반환
@@ -181,9 +204,11 @@ intCounter oldState =
   in
     (return, newState)
 
+
 {-| Counter의 스테이트를 의미하는 타입이다. Counter의 상태는 당연히도 "지금까지
 몇번 세었는가"가 전부이다. -}
 type alias State = { howMany : Int }
+
 
 {-| 새 스테이트를 만들어주는 함수이다. -}
 newState : State

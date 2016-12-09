@@ -83,21 +83,22 @@ onEffects
   -- 이 모듈의 onEffects는 절대 실패하지 않는다. 그러므로 Task 타입의 첫번째
   -- 타입변수에 Never 타입이 들어갔다.
 onEffects router newSubs oldState =
+  -- TODO: 이벤트핸들러 붙였다 떼었다 하면서 테스트하기
   let
-    -- TODO: categorize 이름 이상해
-    categorize : List (MySub msg) -> List msg
-    categorize subs = List.map (\(MakeMySub msg) -> msg) subs
+    -- MySub 안에 들어있는 msg들을 모두 꺼내, List msg로 모은다
+    newTaggers : List msg
+    newTaggers = List.map (\(MakeMySub msg) -> msg) newSubs
 
-    -- TODO: (Task.succeed (Just (Watcher taggers pid))) 반복됨
-    taggers : List msg
-    taggers = categorize newSubs
+    -- pid를 입력하면 newTaggers
+    newWatcher : Process.Id -> Task Never (State msg)
+    newWatcher pid = Task.succeed (Just (Watcher newTaggers pid))
 
     -- TODO: 코드 순서 바꾸기
-    bothStep : Watcher msg -> Task Never (State msg)
-    bothStep {pid} = Task.succeed (Just (Watcher taggers pid))
+    updateProcess : Watcher msg -> Task Never (State msg)
+    updateProcess {pid} = newWatcher pid
 
-    rightStep : Task Never (State msg)
-    rightStep =
+    createProcess : Task Never (State msg)
+    createProcess =
       let
         -- 별 의미없이 있는 함수. 원래는 onDocument 콜백의 결과로 주어지는
         -- 키코드를 파싱하는데 쓰는 함수지만, 본 예제에선 키코드 값을 버리므로
@@ -114,22 +115,16 @@ onEffects router newSubs oldState =
         -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
         promise : Task Never Never
         promise = Dom.onDocument "keydown" keyCode callBack
-
       in
         init
         |> Task.andThen (
           \state -> Process.spawn promise
-          |> Task.andThen (\pid -> Task.succeed (Just (Watcher taggers pid)))
+          |> Task.andThen newWatcher
         )
-
-
-    -- TODO: 이벤트핸들러 붙였다 떼었다 하면서 테스트하기
-    merged : Task Never (State msg)
-    merged = case oldState of
-      Nothing   -> rightStep
-      Just left -> bothStep left
   in
-    merged
+    case oldState of
+      Nothing   -> createProcess
+      Just left -> updateProcess left
 
 
 {-| SelfMsg를 처리하는 함수

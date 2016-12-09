@@ -12,7 +12,7 @@ elm-reactor
 아래 코드들의 주석에 설명을 자세히 달아두었다.
 
 - command 예제: [`MyCounter.elm`](src/MyCounter.elm)
-- subscription 예제: [`MyKeyboard.elm`](src/MyKeyboard.elm)
+- subscription 예제: [`MyKeyboard.elm`](src/MyKeyboard.elm) (주석 작성중)
 
 <br>
 

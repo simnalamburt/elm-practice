@@ -47,7 +47,7 @@ init : Task Never (State msg)
 init = Task.succeed Nothing
 
 
-type alias SelfMsg = ()
+type SelfMsg = MakeSelfMsg
 
 
 (&>) task1 task2 =
@@ -79,7 +79,7 @@ onEffects router newSubs oldState =
 
         -- onDocument 함수에 넣을 콜백함수
         callBack : () -> Task Never ()
-        callBack () = Platform.sendToSelf router ()
+        callBack () = Platform.sendToSelf router MakeSelfMsg
 
         -- onDocument 호출로 생성한 프로미스
         -- Reference: http://package.elm-lang.org/packages/elm-lang/dom/1.1.1/Dom-LowLevel#onDocument
@@ -106,7 +106,7 @@ onEffects router newSubs oldState =
 
 
 onSelfMsg : Platform.Router msg SelfMsg -> SelfMsg -> State msg -> Task Never (State msg)
-onSelfMsg router () state =
+onSelfMsg router _ state =
   case state of
     Nothing ->
       Task.succeed state

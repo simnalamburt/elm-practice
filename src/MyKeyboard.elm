@@ -116,11 +116,8 @@ onEffects router newSubs oldState =
         promise : Task Never Never
         promise = Dom.onDocument "keydown" keyCode callBack
       in
-        init
-        |> Task.andThen (
-          \state -> Process.spawn promise
-          |> Task.andThen newWatcher
-        )
+        Process.spawn promise
+        |> Task.andThen newWatcher
   in
     case oldState of
       Nothing   -> createProcess

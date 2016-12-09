@@ -125,7 +125,8 @@ view model =
       ("font-size", "50pt"),
       ("color", "white"),
       ("display", "inline-block"),
-      ("outline", "none")
+      ("outline", "none"),
+      ("cursor", "pointer")
     ]
   in
     div [ containerStyle ] [
